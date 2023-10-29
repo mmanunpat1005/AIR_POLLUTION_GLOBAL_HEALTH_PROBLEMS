@@ -6,3 +6,5 @@ A project for the Data Science for Business Analytics course, the Autumn 2022 se
 
 • This project focused on data cleaning, interactive data visualization, and statistical analysis using R markdown
 
+The full report: https://rpubs.com/Manunpat/948836
+
