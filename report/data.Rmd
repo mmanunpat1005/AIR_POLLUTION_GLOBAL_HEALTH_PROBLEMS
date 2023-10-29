@@ -1,6 +1,6 @@
 ## Data
 
-```{r, echo = FALSE, message = FALSE}
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
 source(here::here("scripts/setup.R"))
 ```
 
@@ -17,21 +17,27 @@ The columns were renamed to fit the information they were providing. The informa
 We noticed that Kosovo (XKX) and Channel Islands(CHI) were lacking information not only in this table but also in all of the others and thus are not considered on the scope of this analysis. We can see in tables 3, 4 and 5 that CHI does not contain values across all the years. On the other hand, XKX only has partial information in table 4 (2000 to 2005) and 5 (2006 to 2016) and none in table 3.
 
 ```{r echo=FALSE, message=FALSE}
-iso_country_codes <-read.csv(here::here("data/iso_country_codes.csv"), header = TRUE)
+iso_country_codes <- read.csv(here::here("data/iso_country_codes.csv"), 
+                              header = TRUE)
 
-kable(iso_country_codes[1:5, ], caption = "The original iso_country_codes table") %>% kable_styling(bootstrap_options = "bordered")
+kable(iso_country_codes[, ], caption = "The original iso_country_codes table") %>%
+  kable_styling(bootstrap_options = "bordered") %>%
+  kableExtra::scroll_box(width = "100%", height = "250px")
 ```
 
 
 ```{r echo=FALSE, message=FALSE}
-iso_country_codes <- iso_country_codes[,-c(4)]
-iso_country_codes <- iso_country_codes %>% 
-                                rename(c(Country.Name="Country"),
-                                       c(Country.Code3 ="Alpha.3.code"),
-                                       c(Country.Code2 ="Alpha.2.code"))
+iso_country_codes <- iso_country_codes[, -c(4)]
+iso_country_codes <- iso_country_codes %>%
+  rename(
+    c(Country.Name = "Country"),
+    c(Country.Code3 = "Alpha.3.code"),
+    c(Country.Code2 = "Alpha.2.code")
+  )
 
-kable(iso_country_codes[1:5, ], caption = "After selecting only relevant variables")  %>% kable_styling(bootstrap_options = "bordered")
-
+kable(iso_country_codes[, ], caption = "After selecting only relevant variables") %>%
+  kable_styling(bootstrap_options = "bordered") %>%
+  kableExtra::scroll_box(width = "100%", height = "250px")
 ```
 
 
@@ -44,34 +50,40 @@ Global Burden of Disease Collaborative Network. Global Burden of Disease Study 2
 
 The table `mortality rate` contains the overall rate of deaths from various diseases worldwide, where the main risk factor was ambient particulate matter pollution between 1990 and 2019. It considers all ages and both sexes. There are 19 different diseases taken into account and the metric used is a rate per 100k deaths.
 
-In this table, some columns containing numeric values were seen as characters so they had to be converted to numeric in order to be worked on. Then, the values were rounded, the columns renamed and the table reshaped for clarity purposes.
+In this table, some columns containing numeric values were seen as characters so they had to be converted to numeric to be worked on. Then, the values were rounded, the columns renamed and the table reshaped for clarity purposes.
 
 We also created a table containing the five most deadly diseases across all years. The table will help our analysis later on this report.
 
 ```{r echo=FALSE, message=FALSE}
 
-mortality_rate <- read.csv(here::here("data/mortality_rate.csv"), header = TRUE, dec = ".")
-mortality_rate[,8:11] <- sapply(mortality_rate[,c(8:11)], as.numeric)
-mortality_rate <- mortality_rate%>% 
-                    mutate_if(is.numeric, round, digits=4)%>%
-                    arrange(year)%>%
-                    select(-upper, -lower, -rei)
+mortality_rate <- read.csv(here::here("data/mortality_rate.csv"), 
+                           header = TRUE, dec = ".")
+mortality_rate[, 8:11] <- sapply(mortality_rate[, c(8:11)], as.numeric)
+mortality_rate <- mortality_rate %>%
+  mutate_if(is.numeric, round, digits = 4) %>%
+  arrange(year) %>%
+  select(-upper, -lower, -rei)
 
-mortality_rate_wider <- mortality_rate%>%
-                             pivot_wider(names_from = year, values_from = val)
+mortality_rate_wider <- mortality_rate %>%
+  pivot_wider(names_from = year, values_from = val)
 
-mortality <- mortality_rate_wider%>%
-                    mutate(Total = select(., '1990':'2019') %>% 
-                    rowSums(na.rm = TRUE))%>%
-                    relocate(Total, .before = '1990')%>%
-                    arrange(desc(Total))
+mortality <- mortality_rate_wider %>%
+  mutate(Total = select(., "1990":"2019") %>%
+    rowSums(na.rm = TRUE)) %>%
+  relocate(Total, .before = "1990") %>%
+  arrange(desc(Total))
 
-top.5_diseases <- mortality_rate[mortality_rate$cause %in% 
-                   c("Ischemic heart disease","Chronic obstructive pulmonary disease",
-                     "Intracerebral hemorrhage","Ischemic stroke",
-                     "Lower respiratory infections"),]
-                
-kable(mortality[1:5,1:16], caption = "Identifying the deadliest diseases caused by air pollutants (E.g. 1990-1998)")  %>% kable_styling(bootstrap_options = "bordered")
+top.5_diseases <- mortality_rate[mortality_rate$cause %in%
+  c(
+    "Ischemic heart disease", "Chronic obstructive pulmonary disease",
+    "Intracerebral hemorrhage", "Ischemic stroke",
+    "Lower respiratory infections"
+  ), ]
+
+kable(mortality[, ], 
+      caption = "Identifying the deadliest diseases caused by air pollutants") %>%
+  kable_styling(bootstrap_options = "bordered") %>%
+  kableExtra::scroll_box(width = "100%", height = "250px")
 ```
 
 
@@ -89,7 +101,9 @@ The table `mortality rate per country` contains the overall rate of deaths from 
 mortality_rate_country <- read.csv(here::here("data/mortality_rate_countries.csv"), header = TRUE)
 mortality_rate_country <- select(mortality_rate_country, location, cause, year, val)
 
-kable(mortality_rate_country[1:5, ],caption = "Examples from the original table (select only location, cause, year, and val)") %>% kable_styling(bootstrap_options = "bordered")
+kable(mortality_rate_country[1:100, ], caption = "The original table (select only location, cause, year, and val)") %>%
+  kable_styling(bootstrap_options = "bordered") %>%
+  kableExtra::scroll_box(width = "100%", height = "250px")
 
 ```
 
@@ -100,13 +114,17 @@ Then, we checked for missing or mismatching values by creating a sub-table and f
 
 ```{r echo=FALSE, message=FALSE}
 
-checkna <- mortality_rate_country %>% select(location) %>%
-                                      unique() %>%
-                                      left_join(iso_country_codes,
-                                      by = c("location" = "Country.Name"))
-checkna <- checkna[is.na(checkna[,c("Country.Code3")]),]
-kable(checkna[1:5, ], caption = sprintf("Examples of countries that cannot be found in the iso_country_codes table (%.0f countries in total)",length(checkna$location)))  %>% kable_styling(bootstrap_options = "bordered")
+checkna <- mortality_rate_country %>%
+  select(location) %>%
+  unique() %>%
+  left_join(iso_country_codes,
+    by = c("location" = "Country.Name")
+  )
+checkna <- checkna[is.na(checkna[, c("Country.Code3")]), ]
 
+kable(checkna[, ], caption = sprintf("Countries that cannot be found in the iso_country_codes table (%.0f countries in total)", length(checkna$location))) %>%
+  kable_styling(bootstrap_options = "bordered") %>%
+  kableExtra::scroll_box(width = "100%", height = "250px")
 ```
 <br/> We found out that the vast majority of N/A values were caused by country names written differently.
 
@@ -120,53 +138,59 @@ To fix these issues, we created a sub-table to match the countries that were cre
 ```{r echo=FALSE, message=FALSE}
 
 exception_table_countryname <- data.frame(
-  iso_name=c("Côte d'Ivoire", "Russian Federation (the)", "Dominican Republic (the)", 
-             "Republic of North Macedonia", "Philippines (the)", 
-             "Lao People's Democratic Republic (the)", "Palestine, State of",
-             "Netherlands (the)", "Moldova (the Republic of)", "Marshall Islands (the)",
-             "United States of America (the)", "Congo (the)", "Korea (the Republic of)",
-             "Comoros (the)", "Tanzania, United Republic of", "United Arab Emirates (the)",
-             "Korea (the Democratic People's Republic of)", 
-             "United Kingdom of Great Britain and Northern Ireland (the)",
-             "Gambia (the)", "Bahamas (the)", "Central African Republic (the)",
-             "Congo (the Democratic Republic of the)", "Cook Islands (the)",
-             "Sudan (the)", "Niger (the)", "Northern Mariana Islands (the)",
-             "Virgin Islands (U.S.)"),
-  na_name=c("CÃ´te d'Ivoire","Russian Federation", "Dominican Republic", 
-            "North Macedonia", "Philippines",
-            "Lao People's Democratic Republic", "Palestine",
-            "Netherlands", "Republic of Moldova", "Marshall Islands",
-            "United States of America", "Congo", "Republic of Korea",
-            "Comoros", "United Republic of Tanzania", "United Arab Emirates",
-            "Democratic People's Republic of Korea", 
-            "United Kingdom", 
-            "Gambia", "Bahamas", "Central African Republic", 
-            "Democratic Republic of the Congo", "Cook Islands", 
-            "Sudan", "Niger", "Northern Mariana Islands",
-             "United States Virgin Islands"))
+  iso_name = c(
+    "Côte d'Ivoire", "Russian Federation (the)", "Dominican Republic (the)",
+    "Republic of North Macedonia", "Philippines (the)",
+    "Lao People's Democratic Republic (the)", "Palestine, State of",
+    "Netherlands (the)", "Moldova (the Republic of)", "Marshall Islands (the)",
+    "United States of America (the)", "Congo (the)", "Korea (the Republic of)",
+    "Comoros (the)", "Tanzania, United Republic of", "United Arab Emirates (the)",
+    "Korea (the Democratic People's Republic of)",
+    "United Kingdom of Great Britain and Northern Ireland (the)",
+    "Gambia (the)", "Bahamas (the)", "Central African Republic (the)",
+    "Congo (the Democratic Republic of the)", "Cook Islands (the)",
+    "Sudan (the)", "Niger (the)", "Northern Mariana Islands (the)",
+    "Virgin Islands (U.S.)"
+  ),
+  na_name = c(
+    "CÃ´te d'Ivoire", "Russian Federation", "Dominican Republic",
+    "North Macedonia", "Philippines",
+    "Lao People's Democratic Republic", "Palestine",
+    "Netherlands", "Republic of Moldova", "Marshall Islands",
+    "United States of America", "Congo", "Republic of Korea",
+    "Comoros", "United Republic of Tanzania", "United Arab Emirates",
+    "Democratic People's Republic of Korea",
+    "United Kingdom",
+    "Gambia", "Bahamas", "Central African Republic",
+    "Democratic Republic of the Congo", "Cook Islands",
+    "Sudan", "Niger", "Northern Mariana Islands",
+    "United States Virgin Islands"
+  )
+)
 exception_table_countryname <- left_join(exception_table_countryname, iso_country_codes, by = c("iso_name" = "Country.Name"))
 
 mortality_rate_country <- left_join(mortality_rate_country, exception_table_countryname, by = c("location" = "na_name"))
 
-#replace na_name to the main table
+# replace na_name to the main table
 ix_not_na <- !is.na(mortality_rate_country$iso_name)
 mortality_rate_country$location[ix_not_na] <- mortality_rate_country$iso_name[ix_not_na]
 
-mortality_rate_country <- mortality_rate_country %>% 
-                          select(location, cause, year, val)%>%
-                          left_join(iso_country_codes,
-                                    by=c("location" = "Country.Name"))%>%
-                          select(location, Country.Code3, cause, year, val)
-      
-#check to ensure that there is no NA
+mortality_rate_country <- mortality_rate_country %>%
+  select(location, cause, year, val) %>%
+  left_join(iso_country_codes,
+    by = c("location" = "Country.Name")
+  ) %>%
+  select(location, Country.Code3, cause, year, val)
+
+# check to ensure that there is no NA
 recheckna <- is.na(mortality_rate_country$Country.Code3)
 # sum(recheckna) #0 = no NA found
-
 ```
 
 ```{r echo=FALSE, message=FALSE}
-kable(exception_table_countryname[1:5, ], caption = "Examples from the exception table created for fixing the naming issues")  %>% kable_styling(bootstrap_options = "bordered")
-
+kable(exception_table_countryname[, ], caption = "Exception table created for fixing the naming issues") %>%
+  kable_styling(bootstrap_options = "bordered") %>%
+  kableExtra::scroll_box(width = "100%", height = "250px")
 ```
 <br/>
 
@@ -175,14 +199,18 @@ Once the ISO codes were correctly assigned, we renamed the columns and restructu
 
 ```{r echo=FALSE, message=FALSE}
 
-#create variables by cause and total column
-mortality_rate_country_wide <- mortality_rate_country %>% 
-                                group_by(year, location) %>%
-                                mutate(Total = sum(val)) %>%
-                                pivot_wider(names_from = cause, 
-                                           values_from = val)
-kable(mortality_rate_country_wide[1:5,1:11],caption = "Examples from the final output for mortality rate by country") %>% kable_styling(bootstrap_options = "bordered")
-
+# create variables by cause and total column
+mortality_rate_country_wide <- mortality_rate_country %>%
+  group_by(year, location) %>%
+  mutate(Total = sum(val)) %>%
+  pivot_wider(
+    names_from = cause,
+    values_from = val
+  )
+kable(mortality_rate_country_wide[, ], caption = "Final output for mortality rate by country") %>%
+  kable_styling(bootstrap_options = "bordered") %>%
+  kableExtra::scroll_box(width = "100%", height = "350px")
+  
 ```
 
 #### **Table 3 - Pollutant PM2.5**
@@ -202,53 +230,56 @@ We also discovered that 55 countries were missing values for the years 1990 to 2
 Some countries will also display N/A values when joining them with other tables (4 and 5). We created another sub-table called `airpol.missing.countries` which contains the list of the 14 countries that will be missing.
 
 ```{r echo=FALSE, message=FALSE}
-Airpol <- read.csv(here::here("data/pm2.5.csv"), header = TRUE, dec = "." )
-Airpol <- filter(Airpol, !Country.Name == "") #remove last 5 rows
-colnames(Airpol) <- sub("..YR.*","",sub("X","",colnames(Airpol)))
-Airpol[Airpol == ".."] = NA
-Airpol[,5:54] <- sapply(Airpol[,c(5:54)], as.numeric)
-checknaindex_airpol <- which(colSums(!is.na(Airpol))==0)
+Airpol <- read.csv(here::here("data/pm2.5.csv"), header = TRUE, dec = ".")
+Airpol <- filter(Airpol, !Country.Name == "") # remove last 5 rows
+colnames(Airpol) <- sub("..YR.*", "", sub("X", "", colnames(Airpol)))
+Airpol[Airpol == ".."] <- NA
+Airpol[, 5:54] <- sapply(Airpol[, c(5:54)], as.numeric)
+checknaindex_airpol <- which(colSums(!is.na(Airpol)) == 0)
 Airpol <- Airpol[-checknaindex_airpol]
 Airpol <- Airpol[-c(1:2)]
 
-# Countries that not appear in the Table 0 - ISO Country Codes 
+# Countries that not appear in the Table 0 - ISO Country Codes
 
-checkna_airpol <- Airpol%>%          
-                  arrange(Country.Name)%>%
-                  select(Country.Name, Country.Code) %>%
-                  unique() %>%
-                  left_join(iso_country_codes, 
-                    by=c ("Country.Code" = "Country.Code3"))
-checkna_airpol <- checkna_airpol[is.na(checkna_airpol[,c("Country.Name.y")]),]
-checkna_airpol <- checkna_airpol%>%
-                  rename(Country.Name = "Country.Name.x")%>%
-                  select(Country.Name)
+checkna_airpol <- Airpol %>%
+  arrange(Country.Name) %>%
+  select(Country.Name, Country.Code) %>%
+  unique() %>%
+  left_join(iso_country_codes,
+    by = c("Country.Code" = "Country.Code3")
+  )
+checkna_airpol <- checkna_airpol[is.na(checkna_airpol[, c("Country.Name.y")]), ]
+checkna_airpol <- checkna_airpol %>%
+  rename(Country.Name = "Country.Name.x") %>%
+  select(Country.Name)
 rownames(checkna_airpol) <- 1:nrow(checkna_airpol)
 
-#Create table considering countries from Table 0 - ISO Country Codes
-Airpol <- Airpol%>%
-          arrange(Country.Name)%>%
-          right_join(iso_country_codes, 
-                    by=c ("Country.Code" = "Country.Code3"))%>%
-          rename(Country.Name = "Country.Name.y")%>%
-          select(-Country.Name.x, -Country.Code2)%>%
-          relocate(Country.Name, .before= Country.Code)%>%
-          mutate_if(is.numeric, round, digits=4)
+# Create table considering countries from Table 0 - ISO Country Codes
+Airpol <- Airpol %>%
+  arrange(Country.Name) %>%
+  right_join(iso_country_codes,
+    by = c("Country.Code" = "Country.Code3")
+  ) %>%
+  rename(Country.Name = "Country.Name.y") %>%
+  select(-Country.Name.x, -Country.Code2) %>%
+  relocate(Country.Name, .before = Country.Code) %>%
+  mutate_if(is.numeric, round, digits = 4)
 
-#Countries with empty values across all years
-missing_data_airpol <- Airpol[rowSums(is.na(select(Airpol,3:14)))
-                              == ncol(select(Airpol,3:14)), ]
-missing_data_airpol <- missing_data_airpol%>%
-                              select(Country.Name)%>%
-                              arrange(Country.Name)
+# Countries with empty values across all years
+missing_data_airpol <- Airpol[rowSums(is.na(select(Airpol, 3:14)))
+== ncol(select(Airpol, 3:14)), ]
+missing_data_airpol <- missing_data_airpol %>%
+  select(Country.Name) %>%
+  arrange(Country.Name)
 rownames(missing_data_airpol) <- 1:nrow(missing_data_airpol)
 
-# Final Table for Airpol  
-Airpol <- Airpol[rowSums(is.na(select(Airpol,3:14))) 
-                 != ncol(select(Airpol,3:14)), ]
+# Final Table for Airpol
+Airpol <- Airpol[rowSums(is.na(select(Airpol, 3:14)))
+!= ncol(select(Airpol, 3:14)), ]
 
-kable(Airpol[1:5, ], caption = "Identifying the deadliest diseases caused by air pollutants")  %>% kable_styling(bootstrap_options = "bordered")
-
+kable(Airpol[, ], caption = "Air Pollution values across all countries") %>%
+  kable_styling(bootstrap_options = "bordered") %>%
+  kableExtra::scroll_box(width = "100%", height = "250px")
 ```
 
 
@@ -266,55 +297,58 @@ First, we deleted the columns that were not relevant for our analysis and rename
 
 We realized when joining `gdp` and `iso_country_codes` that the data set included locations that were not countries but continents or regions (e.g. "British Virgin Islands"). As our analysis for this table focuses on individual countries, we will not take these locations into account. We created a sub-table that contains a list of all these locations. Furthermore, we also removed Kosovo (XKX) and Channel Islands (CHI) for the reasons we mentioned earlier.
 
-Just like the previous table, we found that several countries (52) had missing values. For that reason, we decided to not consider them in the final table for GDP. We created a sub-table containing the countries that were lacking values `missing_data_gdp`. There are also countries that will display N/A values when joining them with other tables (3 and 5), so we created a sub-table called `gdp.missing.countries` which contain the list of the 11 countries that will be missing.
+Just like the previous table, we found that several countries (52) had missing values. For that reason, we decided to not consider them in the final table for GDP. We created a sub-table containing the countries that were lacking values `missing_data_gdp`. Some countries will display N/A values when joining them with other tables (3 and 5), so we created a sub-table called `gdp.missing.countries` which contains the list of the 11 countries that will be missing.
 
 
 ```{r echo=FALSE, message=FALSE}
 gdp <- read.csv(here::here("data/gdp.csv"), skip = 4, header = TRUE)
-colnames(gdp) <- sub("X","",colnames(gdp))
-checknaindex_gdp <- which(colSums(!is.na(gdp))==0)
+colnames(gdp) <- sub("X", "", colnames(gdp))
+checknaindex_gdp <- which(colSums(!is.na(gdp)) == 0)
 gdp <- gdp[-checknaindex_gdp]
 gdp <- gdp[-c(3:4)]
 
-# Countries that not appear in the Table 0 - ISO Country Codes 
+# Countries that not appear in the Table 0 - ISO Country Codes
 
-checkna_gdp <- gdp%>%          
-                  arrange(Country.Name)%>%
-                  select(Country.Name, Country.Code) %>%
-                  unique() %>%
-                  left_join(iso_country_codes, 
-                    by=c ("Country.Code" = "Country.Code3"))
-checkna_gdp <- checkna_gdp[is.na(checkna_gdp[,c("Country.Name.y")]),]
-checkna_gdp <- checkna_gdp%>%
-                  rename(Country.Name = "Country.Name.x")%>%
-                  select(Country.Name)
+checkna_gdp <- gdp %>%
+  arrange(Country.Name) %>%
+  select(Country.Name, Country.Code) %>%
+  unique() %>%
+  left_join(iso_country_codes,
+    by = c("Country.Code" = "Country.Code3")
+  )
+checkna_gdp <- checkna_gdp[is.na(checkna_gdp[, c("Country.Name.y")]), ]
+checkna_gdp <- checkna_gdp %>%
+  rename(Country.Name = "Country.Name.x") %>%
+  select(Country.Name)
 rownames(checkna_gdp) <- 1:nrow(checkna_gdp)
 
-#Create table considering countries from Table 0 - ISO Country Codes
-gdp <- gdp%>%
-          arrange(Country.Name)%>%
-          right_join(iso_country_codes, 
-                    by=c ("Country.Code" = "Country.Code3"))%>%
-          rename(Country.Name = "Country.Name.y")%>%
-          select(-Country.Name.x, -Country.Code2)%>%
-          relocate(Country.Name, .before= Country.Code)
+# Create table considering countries from Table 0 - ISO Country Codes
+gdp <- gdp %>%
+  arrange(Country.Name) %>%
+  right_join(iso_country_codes,
+    by = c("Country.Code" = "Country.Code3")
+  ) %>%
+  rename(Country.Name = "Country.Name.y") %>%
+  select(-Country.Name.x, -Country.Code2) %>%
+  relocate(Country.Name, .before = Country.Code)
 
-#Countries with empty values across all years
-missing_data_gdp <- gdp[rowSums(is.na(select(gdp,3:33)))
-                              == ncol(select(gdp,3:33)), ]
-missing_data_gdp <- missing_data_gdp%>%
-                          select(Country.Name)%>%
-                          arrange(Country.Name)
+# Countries with empty values across all years
+missing_data_gdp <- gdp[rowSums(is.na(select(gdp, 3:33)))
+== ncol(select(gdp, 3:33)), ]
+missing_data_gdp <- missing_data_gdp %>%
+  select(Country.Name) %>%
+  arrange(Country.Name)
 rownames(missing_data_gdp) <- 1:nrow(missing_data_gdp)
 
 # Final Table for GDP
-gdp <- gdp[rowSums(is.na(select(gdp,3:33))) 
-           != ncol(select(gdp,3:33)), ]
+gdp <- gdp[rowSums(is.na(select(gdp, 3:33)))
+!= ncol(select(gdp, 3:33)), ]
 
-gdp_long <- gather(gdp, year, val, '1990':'2020', factor_key=TRUE)
+gdp_long <- gather(gdp, year, val, "1990":"2020", factor_key = TRUE)
 
-kable(gdp[1:5,1:14], caption = "First 5 rows from GDP Final Table (E.g. 1990-2001)") %>% kable_styling(bootstrap_options = "bordered")
-
+kable(gdp[, ], caption = "GDP per capita across all countries") %>%
+  kable_styling(bootstrap_options = "bordered") %>%
+  kableExtra::scroll_box(width = "100%", height = "250px")
 ```
 
 
@@ -337,50 +371,54 @@ Just like the previous tables, we found that several countries (52) had missing 
 
 ```{r echo=FALSE, message=FALSE}
 agriculture <- read.csv(here::here("data/agriculture.csv"), header = TRUE, dec = ".")
-agriculture[agriculture == ".."] = NA
-agriculture[,5:31] <- sapply(agriculture[,c(5:31)], as.numeric)
-colnames(agriculture) <- sub("ï..","",sub("..YR.*","",sub("X","",colnames(agriculture))))
+agriculture[agriculture == ".."] <- NA
+agriculture[, 5:31] <- sapply(agriculture[, c(5:31)], as.numeric)
+colnames(agriculture) <- sub("ï..", "", sub("..YR.*", "", sub("X", "", colnames(agriculture))))
 agriculture <- filter(agriculture, !Country.Code == "")
 
-# Countries that not appear in the Table 0 - ISO Country Codes 
+# Countries that not appear in the Table 0 - ISO Country Codes
 
-checkna_agriculture <- agriculture%>%          
-                          arrange(Country.Name)%>%
-                          select(Country.Name, Country.Code) %>%
-                          unique() %>%
-                          left_join(iso_country_codes, 
-                          by=c ("Country.Code" = "Country.Code3"))
+checkna_agriculture <- agriculture %>%
+  arrange(Country.Name) %>%
+  select(Country.Name, Country.Code) %>%
+  unique() %>%
+  left_join(iso_country_codes,
+    by = c("Country.Code" = "Country.Code3")
+  )
 checkna_agriculture <- checkna_agriculture[
-                              is.na(checkna_agriculture[,c("Country.Name.y")]),]
-checkna_agriculture <- checkna_agriculture%>%
-                                  rename(Country.Name = "Country.Name.x")%>%
-                                   select(Country.Name)
+  is.na(checkna_agriculture[, c("Country.Name.y")]),
+]
+checkna_agriculture <- checkna_agriculture %>%
+  rename(Country.Name = "Country.Name.x") %>%
+  select(Country.Name)
 rownames(checkna_agriculture) <- 1:nrow(checkna_agriculture)
 
-#Create table considering countries from Table 0 - ISO Country Codes
+# Create table considering countries from Table 0 - ISO Country Codes
 
-agriculture <- agriculture%>%
-          arrange(Country.Name)%>%
-          right_join(iso_country_codes, 
-                    by=c ("Country.Code" = "Country.Code3"))%>%
-          rename(Country.Name = "Country.Name.y")%>%
-          select(-Country.Name.x, -Country.Code2, -Series.Name, -Series.Code)%>%
-          relocate(Country.Name, .before= Country.Code)%>%
-          mutate_if(is.numeric, round, digits=4)
+agriculture <- agriculture %>%
+  arrange(Country.Name) %>%
+  right_join(iso_country_codes,
+    by = c("Country.Code" = "Country.Code3")
+  ) %>%
+  rename(Country.Name = "Country.Name.y") %>%
+  select(-Country.Name.x, -Country.Code2, -Series.Name, -Series.Code) %>%
+  relocate(Country.Name, .before = Country.Code) %>%
+  mutate_if(is.numeric, round, digits = 4)
 
-#Countries with empty values across all years
-missing_data_agri <- agriculture[rowSums(is.na(select(agriculture,3:29)))
-                              == ncol(select(agriculture,3:29)), ]
-missing_data_agri <- missing_data_agri%>%
-                          select(Country.Name)%>%
-                          arrange(Country.Name)
+# Countries with empty values across all years
+missing_data_agri <- agriculture[rowSums(is.na(select(agriculture, 3:29)))
+== ncol(select(agriculture, 3:29)), ]
+missing_data_agri <- missing_data_agri %>%
+  select(Country.Name) %>%
+  arrange(Country.Name)
 rownames(missing_data_agri) <- 1:nrow(missing_data_agri)
 
 # Final Table for Agriculture
-agriculture <- agriculture[rowSums(is.na(select(agriculture,3:29)))
-                           != ncol(select(agriculture,3:29)), ]
+agriculture <- agriculture[rowSums(is.na(select(agriculture, 3:29)))
+!= ncol(select(agriculture, 3:29)), ]
 
-kable(agriculture[1:5,1:14], caption = "First 5 rows from Agriculture Final Table (E.g. 1990-2001)") %>% kable_styling(bootstrap_options = "bordered")
+kable(agriculture[ , ], caption = "Agriculture values across all countries") %>% kable_styling(bootstrap_options = "bordered")%>%
+  kableExtra::scroll_box(width = "100%", height = "250px")
 ```
 
 
@@ -395,51 +433,65 @@ Geography Realm website \| The editor, Caitlin Dempsey can be reached via e-mail
 The table `landlocked_countries` is a list of all countries that are considered landlocked as of July 2017. A country is considered landlocked if it is surrounded by at least one other country which means it has no direct access to any coastline which means no direct access to any oceans / seas. This table includes 5 partially recognized states.
 
 
-We assigned ISO country codes into the`landlocked_countries` table and we found that there were 14 countries (out of 49 landlocked countries) whose names did not match with the ISO country names. We applied the same strategy we used in table 2: we created a sub_table to fix the mismatching issue and then replaced them in the `landlocked_countries` table.
+We assigned ISO country codes to the`landlocked_countries` table and we found that there were 14 countries (out of 49 landlocked countries) whose names did not match with the ISO country names. We applied the same strategy we used in table 2: we created a sub_table to fix the mismatching issue and then replaced them in the `landlocked_countries` table.
 
-After replacing the ISO-standard country names in the table, we found that there are still 7 countries that have no ISO country codes
+After replacing the ISO-standard country names in the table, we found that there are still 7 countries that have no ISO country codes. Therefore, we would not include those countries in our analysis.
+
 
 ```{r echo=FALSE, message=FALSE}
 
-landlocked_countries <- read.csv(here::here("data/landlocked_countries.csv"), header = TRUE, dec = "." )
-kable(landlocked_countries[1:5,], caption = "Examples from the original table") %>% kable_styling(bootstrap_options = "bordered")
+landlocked_countries <- read.csv(here::here("data/landlocked_countries.csv"), header = TRUE, dec = ".")
+kable(landlocked_countries[ , ], caption = "The original landlocked country table") %>% kable_styling(bootstrap_options = "bordered")%>%
+  kableExtra::scroll_box(width = "100%", height = "250px")
 
 
-checkna <- landlocked_countries %>% select(Country.or.Territory) %>%
+checkna <- landlocked_countries %>%
+  select(Country.or.Territory) %>%
   unique() %>%
   left_join(iso_country_codes,
-            by = c("Country.or.Territory" = "Country.Name"))
-checkna <- checkna[is.na(checkna[,c("Country.Code3")]),]
+    by = c("Country.or.Territory" = "Country.Name")
+  )
+checkna <- checkna[is.na(checkna[, c("Country.Code3")]), ]
 
-checkna <- anti_join(checkna,exception_table_countryname, by = c("Country.or.Territory"="na_name"))
+checkna <- anti_join(checkna, exception_table_countryname, by = c("Country.or.Territory" = "na_name"))
 exception_table_countryname_2 <- data.frame(
-  iso_name=c("Bolivia (Plurinational State of)", "Czechia",
-             "Lao People's Democratic Republic (the)", "Republic of North Macedonia",
-             "Moldova (the Republic of)"),
-  na_name=c("Bolivia", "Czech Republic",
-            "Laos", "Macedonia (F.Y.R.O.M.)" ,
-            "Moldova"))
-exception_table_countryname_2 <- left_join(exception_table_countryname_2, iso_country_codes, 
-                                         by = c("iso_name" = "Country.Name"))
-exception_table_countryname<- rbind(exception_table_countryname,exception_table_countryname_2)
+  iso_name = c(
+    "Bolivia (Plurinational State of)", "Czechia",
+    "Lao People's Democratic Republic (the)", "Republic of North Macedonia",
+    "Moldova (the Republic of)"
+  ),
+  na_name = c(
+    "Bolivia", "Czech Republic",
+    "Laos", "Macedonia (F.Y.R.O.M.)",
+    "Moldova"
+  )
+)
+exception_table_countryname_2 <- left_join(exception_table_countryname_2, iso_country_codes,
+  by = c("iso_name" = "Country.Name")
+)
+exception_table_countryname <- rbind(exception_table_countryname, exception_table_countryname_2)
 
 
-landlocked_countries <- left_join(landlocked_countries, exception_table_countryname, 
-                                    by = c("Country.or.Territory" = "na_name"))
+landlocked_countries <- left_join(landlocked_countries, exception_table_countryname,
+  by = c("Country.or.Territory" = "na_name")
+)
 
-#replace na_name to the main table
+# replace na_name to the main table
 ix_not_na <- !is.na(landlocked_countries$iso_name)
 landlocked_countries$Country.or.Territory[ix_not_na] <- landlocked_countries$iso_name[ix_not_na]
 
-landlocked_countries <- landlocked_countries %>% 
-  select(Country.or.Territory, Surrounding.countries)%>%
+landlocked_countries <- landlocked_countries %>%
+  select(Country.or.Territory, Surrounding.countries) %>%
   left_join(iso_country_codes,
-            by=c("Country.or.Territory" = "Country.Name"))%>%
+    by = c("Country.or.Territory" = "Country.Name")
+  ) %>%
   select(Country.or.Territory, Country.Code3, Surrounding.countries)
 
-landlocked_no_iso <- landlocked_countries[is.na(landlocked_countries$Country.Code3),]
-kable(landlocked_no_iso,caption = sprintf("%.0f landlocked countries that have no ISO country codes",length(landlocked_no_iso$Country.or.Territory))) %>% kable_styling(bootstrap_options = "bordered")
+landlocked_no_iso <- landlocked_countries[is.na(landlocked_countries$Country.Code3), ]
 
+kable(landlocked_no_iso, caption = sprintf("%.0f landlocked countries that have no ISO country codes", length(landlocked_no_iso$Country.or.Territory))) %>% 
+  kable_styling(bootstrap_options = "bordered")%>%
+  kableExtra::scroll_box(width = "100%", height = "250px")
 ```
 
 #### **Table 7 - 19 - Air Quality Pollution Levels**
@@ -450,7 +502,7 @@ Air Quality Open Data Platform \| The World Air Quality Index project \| Worldwi
 
 <https://aqicn.org/data-platform/covid19/verify/f042745e-a7a1-4c10-b98d-13c6b69bcc2d>
 
-These tables contain information about the overall air quality in 380 cities worldwide from 2015 to 2020. The data set provides a wide variety of information such as min, max, etc. for each air pollutant species (PM2.5, PM10, etc.) as well as meteorological data (wind, temperature, ...). the years 2019 and 2020 are divided quarterly. PM2.5 and PM10 are measured in $\mu g/x^{3}$. O3, SO2, and NO2 are measured in ppm (parts per million).
+These tables contain information about the overall air quality in 380 cities worldwide from 2015 to 2020. The data set provides a wide variety of information such as min, max, etc. for each air pollutant species (PM2.5, PM10, etc.) as well as meteorological data such as wind and temperature. The years 2019 and 2020 are divided quarterly, PM2.5 and PM10 are measured in microgram per cubic meter. CO is measured in ppm (parts per million), and the others O3, SO2, and NO2 are measured in ppb (parts per billion).
 
 First, we assigned numeric values when it was needed and restructured the table for clarity purposes.
 
@@ -467,147 +519,163 @@ Subsequently, we converted the daily air pollution data to seasonality by averag
 
 ```{r echo=FALSE, message=FALSE}
 
-airquality_filename <- here::here(c("data/airqualitydata-2015H1.csv","data/airqualitydata-2016H1.csv",
-            "data/airqualitydata-2017H1.csv", "data/airqualitydata-2018H1.csv",
-            "data/airqualitydata-2019Q1.csv","data/airqualitydata-2019Q2.csv",
-            "data/airqualitydata-2019Q3.csv", "data/airqualitydata-2019Q4.csv",
-            "data/airqualitydata-2020Q1.csv", "data/airqualitydata-2020Q2.csv",
-            "data/airqualitydata-2020Q3.csv", "data/airqualitydata-2020Q4.csv"))
+airquality_filename <- here::here(c(
+  "data/airqualitydata-2015H1.csv", "data/airqualitydata-2016H1.csv",
+  "data/airqualitydata-2017H1.csv", "data/airqualitydata-2018H1.csv",
+  "data/airqualitydata-2019Q1.csv", "data/airqualitydata-2019Q2.csv",
+  "data/airqualitydata-2019Q3.csv", "data/airqualitydata-2019Q4.csv",
+  "data/airqualitydata-2020Q1.csv", "data/airqualitydata-2020Q2.csv",
+  "data/airqualitydata-2020Q3.csv", "data/airqualitydata-2020Q4.csv"
+))
 
-airquality_daily <- data.frame(Date=as.Date(character()),
-                    Country=character(),
-                    Averagepm25=numeric(),
-                    Averageco=numeric(),
-                    Averagepm10=numeric(),
-                    Averageo3=numeric(),
-                    Averageso2=numeric(),
-                    Averageno2=numeric())
+airquality_daily <- data.frame(
+  Date = as.Date(character()),
+  Country = character(),
+  Averagepm25 = numeric(),
+  Averageco = numeric(),
+  Averagepm10 = numeric(),
+  Averageo3 = numeric(),
+  Averageso2 = numeric(),
+  Averageno2 = numeric()
+)
 
 for (i in 1:length(airquality_filename)) {
-  airquality_temp <- airquality_filename[i] %>% read.csv(skip= 4, header = TRUE) %>%
-                      select(Date, Country, City, Specie, median) %>%
-                      filter(Specie=="pm25"|Specie=="co"|Specie=="pm10"|Specie=="o3"
-                             |Specie=="so2"|Specie=="no2")%>%
-                      pivot_wider(names_from = Specie, values_from = median)%>%     
-                      group_by(Date, Country)%>%
-                      summarise(Averagepm25 = mean(pm25, na.rm = TRUE),
-                                Averageco = mean(co, na.rm = TRUE),
-                                Averagepm10 = mean(pm10, na.rm = TRUE),
-                                Averageo3 = mean(o3, na.rm = TRUE),
-                                Averageso2 = mean(so2, na.rm = TRUE),
-                                Averageno2 = mean(no2, na.rm = TRUE))
+  airquality_temp <- airquality_filename[i] %>%
+    read.csv(skip = 4, header = TRUE) %>%
+    select(Date, Country, City, Specie, median) %>%
+    filter(Specie == "pm25" | Specie == "co" | Specie == "pm10" | Specie == "o3" |
+      Specie == "so2" | Specie == "no2") %>%
+    pivot_wider(names_from = Specie, values_from = median) %>%
+    group_by(Date, Country) %>%
+    summarise(
+      Averagepm25 = mean(pm25, na.rm = TRUE),
+      Averageco = mean(co, na.rm = TRUE),
+      Averagepm10 = mean(pm10, na.rm = TRUE),
+      Averageo3 = mean(o3, na.rm = TRUE),
+      Averageso2 = mean(so2, na.rm = TRUE),
+      Averageno2 = mean(no2, na.rm = TRUE)
+    )
   airquality_daily <- rbind(airquality_daily, airquality_temp)
 }
 
-#join with iso
+# join with iso
 airquality_daily <- left_join(airquality_daily, iso_country_codes,
-                            by = c("Country" = "Country.Code2"))
-airquality_daily$Date <-ymd(airquality_daily$Date)
+  by = c("Country" = "Country.Code2")
+)
+airquality_daily$Date <- ymd(airquality_daily$Date)
 
-##check NA
-checkna_airquality_daily <- is.na(airquality_daily$Country.Code3) 
-#sum(checkna_airquality_daily) #1230
-##check which country code contains NA
-#unique(airquality_daily[checkna_airquality_daily,]$Country) #XK
-##Remark: all of NAs are from Kosovo. ISO doesn't recognize Kosovo as a country
+## check NA
+checkna_airquality_daily <- is.na(airquality_daily$Country.Code3)
+# sum(checkna_airquality_daily) #1230
+## check which country code contains NA
+# unique(airquality_daily[checkna_airquality_daily,]$Country) #XK
+## Remark: all of NAs are from Kosovo. ISO doesn't recognize Kosovo as a country
 
-#Since we do not consider Kosovo 
-airquality_daily <- airquality_daily[!checkna_airquality_daily,]
-#sum(is.na(airquality_daily$Country.Name)) #0 #no NA
+# Since we do not consider Kosovo
+airquality_daily <- airquality_daily[!checkna_airquality_daily, ]
+# sum(is.na(airquality_daily$Country.Name)) #0 #no NA
 
-airquality_daily <- airquality_daily %>% select(Date, Country.Name, Country.Code3, Averagepm25, Averageco, Averagepm10, Averageo3, Averageso2, Averageno2) 
+airquality_daily <- airquality_daily %>% select(Date, Country.Name, Country.Code3, Averagepm25, Averageco, Averagepm10, Averageo3, Averageso2, Averageno2)
 
 
-kable(airquality_daily[1:5,],caption = "Examples from the airquality_daily table") %>% kable_styling(bootstrap_options = "bordered")
+kable(airquality_daily[1:100, ], caption = "The daily airquality table") %>% kable_styling(bootstrap_options = "bordered")%>%
+  kableExtra::scroll_box(width = "100%", height = "250px")
 
-airquality_season <- airquality_daily %>% mutate( month = format(Date, "%m"), 
-                      year = format(Date, "%Y")) %>% group_by(month, Country.Name)%>%
-                      summarise(MonthlyAveragepm25=mean(Averagepm25, na.rm = TRUE),
-                                MonthlyAverageco=mean(Averageco, na.rm = TRUE),
-                                MonthlyAveragepm10=mean(Averagepm10, na.rm = TRUE),
-                                MonthlyAverageo3=mean(Averageo3, na.rm = TRUE),
-                                MonthlyAverageso2=mean(Averageso2, na.rm = TRUE),
-                                MonthlyAverageno2=mean(Averageno2, na.rm = TRUE))
+airquality_season <- airquality_daily %>%
+  mutate(month = format(Date, "%m"), year = format(Date, "%Y")) %>%
+  group_by(month, Country.Name, Country.Code3) %>%
+  summarise(
+    MonthlyAveragepm25 = mean(Averagepm25, na.rm = TRUE),
+    MonthlyAverageco = mean(Averageco, na.rm = TRUE),
+    MonthlyAveragepm10 = mean(Averagepm10, na.rm = TRUE),
+    MonthlyAverageo3 = mean(Averageo3, na.rm = TRUE),
+    MonthlyAverageso2 = mean(Averageso2, na.rm = TRUE),
+    MonthlyAverageno2 = mean(Averageno2, na.rm = TRUE)
+  )
 
-airquality_season[sapply(airquality_season,is.nan)] = NA
+airquality_season[sapply(airquality_season, is.nan)] <- NA
 
-kable(airquality_season[1:5,],caption = "Examples from the airquality_season table") %>% kable_styling(bootstrap_options = "bordered")
+kable(airquality_season[1:100, ], caption = "The average monthly airquality table") %>% kable_styling(bootstrap_options = "bordered")%>%
+  kableExtra::scroll_box(width = "100%", height = "250px")
 
 ############# Comparison of missing values from tables used for the analysis #################
 
 # compare mortality vs Airpol
-uniquecountry_mortality<- unique(mortality_rate_country_wide[,c("Country.Code3")])
-uniquecountry_airpol <- unique(Airpol[,c("Country.Code")])
-uniquecountry_airpol<- as.data.frame(uniquecountry_airpol)
+uniquecountry_mortality <- unique(mortality_rate_country_wide[, c("Country.Code3")])
+uniquecountry_airpol <- unique(Airpol[, c("Country.Code")])
+uniquecountry_airpol <- as.data.frame(uniquecountry_airpol)
 
 colnames(uniquecountry_airpol) <- c("Country.Code3")
-mortality.vs.airpol <- anti_join(uniquecountry_mortality, uniquecountry_airpol) #These are 10 countries that are in mortality but not in airpol
-airpol.vs.mortality <- anti_join(uniquecountry_airpol, uniquecountry_mortality) #These are 0 countries that are in airpol but not in mortality
+mortality.vs.airpol <- anti_join(uniquecountry_mortality, uniquecountry_airpol) # These are 10 countries that are in mortality but not in airpol
+airpol.vs.mortality <- anti_join(uniquecountry_airpol, uniquecountry_mortality) # These are 0 countries that are in airpol but not in mortality
 
-#Compare tables; Airpol vs GDP and Agriculture
-airpol.vs.gdp <- Airpol%>%
-                    arrange(Country.Name)%>%
-                    right_join(gdp[,1:2], 
-                              by=c ("Country.Code" = "Country.Code"))%>%
-                    tail(12)%>%
-                    select(Country.Name.y)%>%
-                    rename(Country.Name = "Country.Name.y")
+# Compare tables; Airpol vs GDP and Agriculture
+airpol.vs.gdp <- Airpol %>%
+  arrange(Country.Name) %>%
+  right_join(gdp[, 1:2],
+    by = c("Country.Code" = "Country.Code")
+  ) %>%
+  tail(12) %>%
+  select(Country.Name.y) %>%
+  rename(Country.Name = "Country.Name.y")
 rownames(airpol.vs.gdp) <- 1:nrow(airpol.vs.gdp)
-airpol.vs.agri <- Airpol%>%
-                    arrange(Country.Name)%>%
-                    right_join(agriculture[,1:2], 
-                              by=c ("Country.Code" = "Country.Code"))%>%
-                    tail(9)%>%
-                    select(Country.Name.y)%>%
-                    rename(Country.Name = "Country.Name.y")
+airpol.vs.agri <- Airpol %>%
+  arrange(Country.Name) %>%
+  right_join(agriculture[, 1:2],
+    by = c("Country.Code" = "Country.Code")
+  ) %>%
+  tail(9) %>%
+  select(Country.Name.y) %>%
+  rename(Country.Name = "Country.Name.y")
 rownames(airpol.vs.agri) <- 1:nrow(airpol.vs.agri)
 
 ##### Missing Countries in Airpol
-airpol.missing.countries <-full_join(airpol.vs.gdp, airpol.vs.agri)
+airpol.missing.countries <- full_join(airpol.vs.gdp, airpol.vs.agri)
 
-#Compare tables; GDP vs Airpol and Agriculture
-gdp.vs.airpol <- gdp%>%
-                    arrange(Country.Name)%>%
-                    right_join(Airpol[,1:2], 
-                              by=c ("Country.Code" = "Country.Code"))%>%
-                    tail(9)%>%
-                    select(Country.Name.y)%>%
-                    rename(Country.Name = "Country.Name.y")
+# Compare tables; GDP vs Airpol and Agriculture
+gdp.vs.airpol <- gdp %>%
+  arrange(Country.Name) %>%
+  right_join(Airpol[, 1:2],
+    by = c("Country.Code" = "Country.Code")
+  ) %>%
+  tail(9) %>%
+  select(Country.Name.y) %>%
+  rename(Country.Name = "Country.Name.y")
 rownames(gdp.vs.airpol) <- 1:nrow(gdp.vs.airpol)
-gdp.vs.agri <- gdp%>%
-                arrange(Country.Name)%>%
-                right_join(agriculture[,1:2], 
-                          by=c ("Country.Code" = "Country.Code"))%>%
-                tail(6)%>%
-                select(Country.Name.y)%>%
-                rename(Country.Name = "Country.Name.y")
+gdp.vs.agri <- gdp %>%
+  arrange(Country.Name) %>%
+  right_join(agriculture[, 1:2],
+    by = c("Country.Code" = "Country.Code")
+  ) %>%
+  tail(6) %>%
+  select(Country.Name.y) %>%
+  rename(Country.Name = "Country.Name.y")
 rownames(gdp.vs.agri) <- 1:nrow(gdp.vs.agri)
 
 ##### Missing Countries in  GDP
-gdp.missing.countries <-full_join(gdp.vs.airpol, gdp.vs.agri)
+gdp.missing.countries <- full_join(gdp.vs.airpol, gdp.vs.agri)
 
-#Compare tables; Agriculture vs Airpol and GDP
-agri.vs.airpol <- agriculture%>%
-                    arrange(Country.Name)%>%
-                    right_join(Airpol[,1:2], 
-                              by=c ("Country.Code" = "Country.Code"))%>%
-                    tail(6)%>%
-                    select(Country.Name.y)%>%
-                    rename(Country.Name = "Country.Name.y")
+# Compare tables; Agriculture vs Airpol and GDP
+agri.vs.airpol <- agriculture %>%
+  arrange(Country.Name) %>%
+  right_join(Airpol[, 1:2],
+    by = c("Country.Code" = "Country.Code")
+  ) %>%
+  tail(6) %>%
+  select(Country.Name.y) %>%
+  rename(Country.Name = "Country.Name.y")
 rownames(agri.vs.airpol) <- 1:nrow(agri.vs.airpol)
 
-agri.vs.gdp <- agriculture%>%
-                    arrange(Country.Name)%>%
-                    right_join(gdp[,1:2], 
-                              by=c ("Country.Code" = "Country.Code"))%>%
-                    tail(6)%>%
-                    select(Country.Name.y)%>%
-                    rename(Country.Name = "Country.Name.y")
+agri.vs.gdp <- agriculture %>%
+  arrange(Country.Name) %>%
+  right_join(gdp[, 1:2],
+    by = c("Country.Code" = "Country.Code")
+  ) %>%
+  tail(6) %>%
+  select(Country.Name.y) %>%
+  rename(Country.Name = "Country.Name.y")
 rownames(agri.vs.gdp) <- 1:nrow(agri.vs.gdp)
 
 ##### Missing Countries in Agriculture
-agri.missing.countries <- full_join(agri.vs.gdp,agri.vs.airpol) 
-
-
+agri.missing.countries <- full_join(agri.vs.gdp, agri.vs.airpol)
 ```
-

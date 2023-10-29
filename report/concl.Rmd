@@ -4,6 +4,92 @@
 source(here::here("scripts/setup.R"))
 ```
 
-* Take home message
-* Limitations
-* Future work?
+It's widely known that exposure to poor air quality leads to increases in premature mortality such as lung cancer, cardiovascular and respiratory diseases. From our study, we found that diseases that were correlated to air pollution the most were infant and premature birth related diseases. We conclude that infants and, especially, babies in the womb were at higher risk of severe illness since they were more susceptible to air pollution. According to our study, 4 out of top 5 most correlated diseases are infant related diseases and we find that 1 microgram per cubic meter increase in PM10 could lead to 2%-14% increase in the mortality rate of those diseases. 
+
+From 1990, while the PM2.5 pollution has slightly decreased over time, the air pollution-related mortality rate had significantly increased over 30% until 2015 and slightly decreased by 2% between 2015 - 2017. We find that the result was counter-intuitive which might be due to the following reasons. Firstly, the global PM 2.5 might not tell the full picture of global air pollution. other air pollutants might have upward trends which leads to increasing mortality rate. Secondly, the current average level of Pm2.5 at 27 micrograms per cubic meter is not low enough to reduce health problems that are related to air pollution. According to WHO global air quality guidelines, WHO's ultimate target for PM2.5 is 5 micrograms per cubic meter, which is the level that will substantially reduce health risks. Also, based on AQI, the PM2.5 level between 12 and 35.5 might affect those who are sensitive to air pollution and the level above 35.5 is unhealthy for sensitive groups.  
+
+In addition, we conclude that there are seasonal patterns of air pollution, especially in countries that are far from the Equator. PM 2.5 and PM 10 generally peak in winter and are at the lowest level in summer, while the seasonal trend of O3 is the other way round. 
+
+We also try to discover what factors impact air pollution the most. We use GDP as an economic indicator, landlock as a geographical factor as well as the percentage of the agriculture sector to GDP since the agriculture sector has long been criticized as a main source of air pollution. We find that the Agriculture factor could explain 13% of the variation of the air pollution, while the other factors are not statistically significant.
+
+### Limitations 
+
+This study made us realize that assessing the impact of air pollution on health problems is way harder than it seems. Even tough, we thought that we had a sufficient amount of data to conclude, we realized that there were dozens of factors that we didn’t consider that could have help us in this study. For example, Yang et al.[2020] examine factors that influenced PM 2.5 and PM 10 in Shenyang City of China and find that wind speed is one of the most important factor across all seasons, while temperature, air pressure, humidity are also key factors in some seasons. They also find that PM 2.5 and PM 10 in winter is higher than in summer which is aligned with the result from our study. In additional, Transportation (Anenberg et al., 2019), Mining activities (Pokorna et al., 2016) and natural disasters (Chandrappa and Kulshrestha, 2015) are also factors besides Agriculture that could impact air pollution.
+
+This work also made us understand that analyzing a topic as big as air pollution and health problems on a global scale is complicated. Indeed, countries develop at different rates and timing over the years and they also have different pollution related regulations, which makes it difficult to compare as a whole. Moreover, geographical factors are crucial for air pollution and diseases. Focusing on only one region (e.g., continent) or even one country would have given clearer results and more precise conclusions. Similarly, health problems are never appearing only because of air pollution, they rely on multiple factors such as overall life quality, climate, body constitution, and other factors that are not entirely known to man. Furthermore, some diseases take years to develop (e.g., cancers) and air pollution data are relatively recent (hard to find one before 1990), so it is hard to correlate them directly to evolution of air pollution. Therefore, it is tough concluding diseases being significantly related to air pollution, especially when analyzing them on a global scale.
+
+Overall, for a global scale analysis,we were lacking historical data for air pollution and relevant factors.
+
+### Future work
+
+First of all, we should focus on a regional or a local scale. Analyzing air pollution problems in a global scale is very complicated because too many factors have to be considered and different regions have different sources of pollution emissions.
+
+Secondly, we should incorporate more data in our research. We could include data from the transportation sector, the mining sector and natural disasters as additional factors when we analyze the factors that impact air pollution levels. In addition, in this study, we conducted the study on air pollution and geographical condition by focusing on landlocked countries because we assumed that landlocked and non-landlocked countries have different meteorological conditions such as wind speed and humidity In the future work, we should use meteorological condition data instead which will be more precise and similar to the work of Yang et al. [2020].
+
+Thirdly, we could study the impact of man-made activities and air pollution by focusing on the data during the Covid-19 lockdown. We could quantify the reduction of air pollution in 2020-2021, which was mainly due to the temporary suspension of human activities during the lockdown, to get a better understanding of the relationship between man-made activities and air pollution.
+
+
+# References
+
+- Bibliography
+
+Frederick W. Lipfert , Juan Zhang & Ronald E. Wyzga, 2000. Infant Mortality
+and Air Pollution: A Comprehensive Analysis of U.S. Data for 1990, Journal of the Air & Waste Management Association, 50:8, 1350-1366
+
+Hannah Ritchie and Max Roser (2017) - "Air Pollution". Published online at OurWorldInData.org. Retrieved from: 'https://ourworldindata.org/air-pollution' 
+
+Hongmei Yang, Qin Peng, Jun Zhou, Guojun Song and Xinqi Gong, 2020. The unidirectional causality influence of factors on PM2.5 in Shenyang city of China. Nature Scientific Reports.
+
+Hong Qiu, Ignatius Tak-Sun Yu, Xiaorong Wang, Linwei Tian, Lap Ah Tse, Tze Wai Wong, 2012. Cool and dry weather enhances the effects of air pollution on emergency ischemic heart disease (IHD) hospital admissions. International Journal of Cardiology Volume 168, Issue 1, P500-505.
+
+Ioannis Manisalidis et al., 2020. Environmental and Health Impacts of Air Pollution: A Review. Front Public Health.
+
+Jiang XQ, Mei XD, Feng D. Air pollution and chronic airway diseases: what should people know and do? J Thorac Dis. 2016 Jan;8(1):E31-40.
+
+Kim, S.Y., Kim, S.H., Wee, J.H. et al. Short and long term exposure to air pollution increases the risk of ischemic heart disease. Sci Rep 11, 5108 (2021).
+
+Madani, K. Have International Sanctions Impacted Iran’s Environment? World 2021, 2, 231–252.
+
+Markus Amann et al., 2017. Measures to address air pollution from agricultural sources
+
+Petra Pokorna, Jan Hovorka and Jan Brejcha, 2016. Impact of mining activities on the air quality in the village nearby a coal strip mine. IOP Conference Series: Earth Environmental Sci. 44 032021
+
+Ramesha Chandrappa and Umesh Chandra Kulshrestha, 2015. Air Pollution and Disasters. Sustainable Air Pollution Management. 2015 Aug 22 : 325–343
+
+Sam Heft-Neal, Jennifer Burney, Eran Bendavid and Marshall Burke, 2018. Robust relationship between air quality and infant mortality in Africa, Nature volume 559, P254–258.
+
+Susan Anenberg, Josua Miller, Daven Henze and Ray Minjares, 2019. A global snapshot of the air pollution-related health impacts of transportation sector emissions in 2010 and 2015. The International Council on Clean Transportation report.
+
+World Bank Group, Somalia Economic Update, October 2015, Edition No.1.
+
+- Webography
+
+AQI: Air Quality and Pollution Measurement <https://aqicn.org/calculator>
+
+Association Nationale pour l’amélioration de la qualité de l’air, Particules en suspension (PM10, PM2,5) [unknown], last accessed 12 November 2021. <https://www.respire-asso.org/particules-en-suspension-pm10-pm-25/>
+
+Bloomberg, Macau's Economy, GDP Data: Shrinks 49% in First Quarter, last accessed 20 November 2021. <https://www.bloomberg.com/news/articles/2020-05-30/macau-s-economy-shrinks-by-49-during-coronavirus-19-lockdown>
+
+ecoco2.com, Les événements de 2015 dus au réchauffement climatique [2016], last accessed November 12. <https://www.ecoco2.com/blog/les-evenements-de-2015-dus-au-rechauffement-climatique/>
+
+Mei.edu, The Middle East in 2015 and beyond: Trends and Drivers [2014], last accessed November 13. <https://www.mei.edu/publications/middle-east-2015-and-beyond-trends-and-drivers>
+
+Novonite.com, Bulgaria Achieves Kyoto Protocol Targets - IWR Report, last accessed 20 November 2021.
+ <https://www.novinite.com/articles/106682/Bulgaria+Achieves+Kyoto+Protocol+Targets+-+IWR+Report>
+
+University of York, Study links outdoor air pollution with millions of preterm births [2017], last accessed 13 November 2021. <https://www.york.ac.uk/news-and-events/news/2017/research/pollution-preterm-births/>
+
+Sarah Gibbens, National Geographic, accessed 1 November 2021. <https://www.nationalgeographic.com/environment/article/meat-production-leads-to-thousands-of-air-quality-related-deaths-annually>
+
+Wikipedia, Air Pollution, last accessed 13 November 2021, <https://en.wikipedia.org/wiki/Air_pollution>
+
+Wikipedia, Particulates, last accessed 12 November 2021, <https://en.wikipedia.org/wiki/Particulates>
+
+WilsonCenter, A Year of Crisis: The Middle East in 2015, [2015], last accessed 10 November 2021. <https://www.wilsoncenter.org/event/year-crisis-the-middle-east-2015>
+
+World Health Organization, Ambient (outdoor) air pollution [2021], last accessed 12 November 2021. <https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-quality-and-health>
+
+World Health Organization global air quality guidelines, accessed 10 November 2021. <https://apps.who.int/iris/bitstream/handle/10665/345329/9789240034228-eng.pdf>
+
+World Health Organization, 9 out of 10 people worldwide breathe polluted air, but more countries are taking action, accessed 10 November 2021.
+<https://www.who.int/news/item/02-05-2018-9-out-of-10-people-worldwide-breathe-polluted-air-but-more-countries-are-taking-action>

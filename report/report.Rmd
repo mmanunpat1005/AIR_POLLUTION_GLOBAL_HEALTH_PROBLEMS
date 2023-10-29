@@ -2,8 +2,17 @@
 title: What has been the impact from air pollution on global health problems from 1990 to present?
 author: "Manunpat Sirijaturaporn, Derek Greiner, and Arturo García Luna Beltrán"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: html_document
+output:
+  html_document:
+    theme:
+      bootswatch: lux
 ---
+<style>
+body {
+text-align: justify}
+</style>
 
-```{r child = c('intro.Rmd', 'data.Rmd', 'eda.Rmd', 'analysis.Rmd', 'concl.Rmd')}
+
+```{r child = c('intro.Rmd')}
+#, 'data.Rmd', 'eda.Rmd', 'analysis.Rmd', 'concl.Rmd'
 ```

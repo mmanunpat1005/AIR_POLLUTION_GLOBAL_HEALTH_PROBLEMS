@@ -1,10 +1,711 @@
 # Analysis
 
-```{r, echo = FALSE, message = FALSE}
+```{r, echo = FALSE, message = FALSE, warning=FALSE}
 source(here::here("scripts/setup.R"))
 ```
 
-* Answers to the research questions
-* Different methods considered
-* Competing approaches
-* Justifications
+#### **1. Descriptive Statistics** 
+
+##### **1.1   How have the air pollution levels changed from 1990 to 2019? How has mortality rate changed?** 
+
+- Air pollution
+
+This question aims to examine whether the evolution of air pollution by the pollutant PM2.5 is correlated with the evolution of the mortality rate expressed per 100K inhabitants.
+
+First of all, we notice that air pollution has changed very little between 1990 and 2017. Indeed, as shown in the graph below, air pollution has remained rather stable, although there has been a decrease of about 8% between 1990 and 2017. 
+There was a significant increase of activity in 2015 (+6.5% compared to 2014). Looking at the different values in the database to try to explain this sudden change, we notice that some countries had a huge increase between these two years. Indeed, Saudi Arabia and Qatar recorded a 22.4% and 19.8% jump in PM2.5 levels. Behind them, countries such as Iraq, Egypt, Chad, Bahrain, and Kuwait also saw their levels rise drastically (between 10 and 15% on average).
+
+Geographically, these countries are mostly located in the Middle East (except for Chad and Egypt,although the latter is close). Around this time, the situation was critical in this region: civil wars, extremists gaining power, etc. These events caused a huge humanitarian crisis which could explain the peak in Air pollution. (WilsonCenter, 2015)
+
+As the 2.5 particle is mostly produced by households and wood heating is the main cause, the precarious situation in the Middle East in 2015 may be correlated to the 2.5 particle peak of the same year. However, we cannot be sure without more data and further investigation.
+
+Climatically, 2015 was also a disaster. Exceptional heat waves were observed in India, Pakistan, China, Indonesia, Japan, and Australia. It was the hottest year on record at the time. There were also other disasters such as the disproportionately hot El Niño current, forest fires in Alaska, Torrential rains in China, etc (ecoco2, 2016). PM2.5 particle are also rising because of natural sources such as dust storms that are very common in the Middle East. This could be some factors that explain why these countries have seen a tremendous increase in 2015, but we cannot say for sure with the data we are using.
+
+We can therefore deduce that the increase in 2015 is not a simple coincidence, as pollution is often correlated with climate change. Nevertheless, it is not possible to fully justify the PM2.5 peak in 2015 with the data used in our study.
+
+The decrease of PM2.5 between 1990 and 2017 is still an explainable phenomenon since these particles are mainly emitted by households and in particular by wood heating which is decreasing nowadays. However, this does not mean that air pollution is improving, as we are only considering fine particles 2.5. To have a more precise idea of the evolution of air quality, we would have to consider all the affecting particles that constitute air pollution (CO2, NOx, radioactive pollutants, etc.).
+
+
+- Mortality
+
+Between 1990 and 2017, mortality increased by about one third (+34%), which is enormous. Nevertheless, it is noticeable that it has been decreasing very slightly since 2015 (-2% in 2017 compared to 2015).
+
+One of the diseases that has increased the most is lung, bronchus, and trachea cancer. Indeed, between 1990 and 2017, its rate increased by almost 80%, even if it remains low overall. As for type 2 diabetes, it has exploded (+250%).
+
+Cancer and diabetes are diseases that take years to develop. This means that the cases observed in 2017 were affected by the pollution of previous years. We would therefore have to wait decades to know whether these diseases follow the pollution trend of the 2010s.
+
+We notice that, although PM2.5 pollution is stable/slightly decreasing, mortality has increased strongly. This can be demonstrated by the fact that we only consider PM2.5 in our study and that diseases such as cancer or diabetes are caused by a multitude of factors.
+
+As a conclusion, we observe the fact that a slight decrease in air pollution is probably only because we are considering only one factor (PM2.5). If we had studied all the pollutants in the air, we think that we would have had an evolution correlated to that of mortality.
+
+Our databases show that mortality is increasing considerably even though PM2.5 is rather stable. Although not all diseases are due to the factor we are studying (PM2.5), the increase in mortality due to pollution makes sense based on current global environmental trends. 
+
+```{r, echo=FALSE, message=FALSE}
+
+#Total for each year Airpol & Mortality
+
+AirpolGlobal <- mapply(mean,Airpol[c(-1,-2)])
+AirpolGlobal <- AirpolGlobal%>%
+  as.data.frame()%>%
+  tibble::rownames_to_column("year")%>%
+  rename("Air Pollution" = ".")
+
+MortalityGlobal <- mortality[,-c(1:7)]
+MortalityGlobal <- mapply(sum, MortalityGlobal)
+MortalityGlobal <- MortalityGlobal%>%
+  as.data.frame()%>%
+  tibble::rownames_to_column("year")%>%
+  rename("Mortality" = ".")
+
+#Merging Tables
+GlobalAirpolMorta <- AirpolGlobal%>%
+                          left_join(MortalityGlobal, by= "year")%>%
+                          select(year,`Air Pollution`, Mortality)
+
+```
+
+```{r, fig.width=2, fig.height=2, eval=T, out.width= '100%'}
+
+fig <- plot_ly()
+fig <- fig %>% add_trace(x = ~GlobalAirpolMorta$year, y = ~GlobalAirpolMorta$`Air Pollution`, name = "Air Pollution", mode = "lines+markers", type = "scatter")
+
+ay <- list(
+  tickfont = list(color = "red"),
+  overlaying = "y",
+  side = "right",
+  title = "<b>Mortality (per 100k people)</b>",
+  rangemode = "tozero")
+
+fig <- fig %>% add_trace(x = ~GlobalAirpolMorta$year, y = ~GlobalAirpolMorta$Mortality, name = "Mortality", yaxis = "y2", mode = "lines+markers", type = "scatter")
+
+#Set figure title, x and y-axes titles
+fig %>% layout(
+  title = "<b>Air pollution and Mortality Rates change<b>", yaxis2 = ay,
+  xaxis = list(title="<b>Years<b>"),
+  yaxis = list(title="<b>Air Pollution (avg. mcg per cubic meter)</b>", rangemode = "tozero")
+)%>%
+  layout(plot_bgcolor='#e5ecf6',
+          xaxis = list(
+            zerolinecolor = '#ffff',
+            zerolinewidth = 2,
+            gridcolor = 'ffff'),
+          yaxis = list(
+            zerolinecolor = '#ffff',
+            zerolinewidth = 2,
+            gridcolor = 'ffff')
+          )
+```
+
+##### **1.2   What are the diseases with a higher correlation with air pollution?**
+
+As we can see in the table, the diseases most correlated with air pollution concentration and the pollutant PM2.5 are:
+
+
+-	Neonatal preterm & disorders birth (about 0.53 and 0.51)
+-	Sudden infant death syndrome (0.50) 
+
+These diseases are those that have remained stable or are decreasing. It can therefore be deduced that these diseases are the ones most affected by PM 2.5. Nevertheless, diseases are never only related to one single factor.
+
+On the other, the diseases that increased the most, such as Lung cancer or diabetes show a negative correlation to PM2.5 (Lung cancer being the highest with -0.19). As said previously, this is easily explained as these kinds of diseases are due to a high number of factors including some that are still unknown to man.
+
+Overall, there are no strong correlations, whether it is positive (0.53) or negative (-0.19). The problem lays in the approach we took as diseases are never linked to one pollutant but to general air pollution. However, diseases that are the most correlated are not a coincidence as studies show that neonatal (which means newborn) or infant related health problems are linked to air pollution and especially PM2.5 because this particle can lodge deep in the body and affect pregnant women (University of York, 2017). However, to be certain of this, we would have to compare neonatal diseases with another pollutant to confirm that PM2.5 is the major factor. We can only say that there is a correlation, but, like the other diseases, there are always multiple causes involved, so it is hard to say that PM2.5 is the most influential factor in these neonatal diseases.
+
+
+```{r, echo=FALSE, message=FALSE, out.width= '100%'}
+# Prepare the table with the years available in Airpol
+
+prep.mortality <- mortality_rate_country_wide %>%
+  filter(year == "1990" | year == "1995" | year == "2000" | year == "2005" |
+    year == "2010" | year == "2011" | year == "2012" | year == "2013" |
+    year == "2014" | year == "2015" | year == "2016" | year == "2017")
+
+
+prep.airpol <- Airpol %>%
+  gather(year, val, "1990":"2017", factor_key = FALSE) %>%
+  rename("Air Pollution" = "val")
+prep.airpol$year <- as.numeric(as.character(prep.airpol$year))
+
+airpol_and_mortality <- prep.mortality %>%
+  right_join(prep.airpol,
+    by = c(
+      "Country.Code3" = "Country.Code", "year" = "year",
+      "location" = "Country.Name"
+    )
+  ) %>%
+  relocate("Air Pollution", .before = "Diabetes mellitus type 2")
+
+prep.corr <- airpol_and_mortality[, -c(1:4)]
+top.10.corr <- cor(prep.corr)
+top.10.corr <- data.frame(top.10.corr)
+top.10.corr <- top.10.corr %>%
+  arrange(desc(Air.Pollution))
+
+diseases <- top.10.corr %>%
+  tibble::rownames_to_column("Diseases")%>%
+  select(Diseases, Air.Pollution) %>%
+  slice(-1)%>%
+  tibble::rownames_to_column("Priority")%>%
+  rename('Air Pollution Correlation' = Air.Pollution)
+  
+kable(diseases[c(1:5,19), -1], caption = "Diseases ordered by highest correlation to Air Pollution") %>%
+  kable_styling(bootstrap_options = "bordered")
+```
+
+We also would like to find if the top 5 diseases with the highest mortality rates also have high correlations with pollution concentration and we find that lung-related diseases (Chronic obstructive pulmonary disease, Lower respiratory infections) tend to have high correlation with air pollution concentration. On the other hand, the deadliest disease, Ischemic heart disease, and stroke-related diseases (Intracerebral hemorrhage, Ischemic stroke) are almost uncorrelated with pollution concentration. According to Kim et al. (2021), they study the relationship between exposure to air pollution and the risk of ischemic heart disease in Korea. They use meteorological data such as temperature, and air pollution data, including SO2, NO2, O3, CO, and PM10. They find that short-term exposure to SO2 and long-term exposure to SO2, O3, and PM10 are related to ischemic heart disease and the risk even increases in old-aged groups and low-income groups. Their finding contradicts the results from our study and, in our opinion, the reason is that we only use PM2.5 in our study. In the future study, we should include air pollution concentrations from other pollutants as well as meteorological and income data in the analysis. Also, the result might also be different across different ethnicity, so analysis at the global level, like in our study, might be more challenging than analysis at the regional level.
+
+```{r, echo=FALSE, message=FALSE, out.width= '100%'}
+
+
+topdeath.corr <- data.frame(cor(prep.corr[,c("Air Pollution",top.5_diseases$cause[1:5])]))
+
+diseases_topdeath <- topdeath.corr %>%
+  tibble::rownames_to_column("Diseases")%>%
+  select(Diseases, Air.Pollution) %>%
+  slice(-1)%>%
+  tibble::rownames_to_column("Priority")%>%
+  rename('Air Pollution Correlation' = Air.Pollution)
+  
+kable(diseases_topdeath[c(1:5), -1], caption = "Diseases ordered by highest mortality rates") %>%
+  kable_styling(bootstrap_options = "bordered") 
+
+```
+
+##### **1.3   Does air pollution change with the seasons?**
+
+Although air pollution is an issue all year round, we noticed that smog, which is a type of visible air pollution, usually happens in winter. In this section, we would like to study if there are seasonal patterns in air pollution levels based on the overall air quality in 380 cities worldwide from 2015 to 2020. 
+
+In the Northern Hemisphere, winter and summer generally begin in December and June respectively, while seasons in the southern hemisphere such as Argentina and Australia are the opposite. In addition, countries located near the Equator experience less seasonal variation; for example, the temperature difference between summer and winter in Switzerland is around 30 degrees Celsius, while the temperature differences in countries closer to the Equator such as Thailand and Mexico are around 10-15 degree Celsius.
+Therefore, in this study, we separated countries into 3 groups; 
+
+1) the "North" group consisting of countries located above the Tropic of Cancer in the Northern Hemisphere at 23°26′11.2″ (or 23.43644°) N
+<br/>
+2) the "South" group consisting of countries located below the Tropic of Capricorn in the Southern Hemisphere at 23°26′11.2″ (or 23.43644°) S 
+<br/>
+3) the "Tropics" group consisting of countries located close to the Equator between the Tropic of Cancer and the Tropic of Capricorn
+
+Then, we plot the average monthly air pollution levels (PM2.5, PM10, CO, O3, SO2, and NO2) for each group.
+
+```{r, echo=FALSE, message=FALSE, results= 'hide'}
+
+mapped_data <- joinCountryData2Map(mortality_rate_country_wide_current, joinCode = "ISO3", nameJoinColumn = "Country.Code3", verbose = FALSE)
+
+country_lon_lat <- data.frame(Country.Code3 = mapped_data$ISO3.1, Country = mapped_data$ADMIN.1, Longitude = mapped_data$LON, Latitude = mapped_data$LAT)
+
+country_lon_lat <- mutate(country_lon_lat, Type = case_when(Latitude <= -23.43644 ~ "South", Latitude >= 23.43644 ~ "North", TRUE ~ "Tropics"))
+  
+```
+
+Regarding the "North" group, majority of countries in the world are under this group and those countries usually use a four-season model to identify the warmest and coldest seasons, which are separated by two intermediate seasons. Since the year has 12 months, each season lasts about three months. To be precise about the dates of the seasons, there are two common methods to identify it; astronomical definition and meteorological definition. The former uses the dates of equinoxes and solstices to mark the beginning and end of the season while the latter sets the first day of the months as the beginning of the season and the last day as the end of the season. Combining both of the methods, we would say that winter is around December to February, while summer is around June to August, and there are spring and autumn run between them.
+
+The below chart shows that air pollution levels of all pollutants, except ozone (O3), peaked in December-January which are in the winter months, and the trough levels were in July-August which are in the summer months; however, O3 level had an opposite trend. This is because when the temperature drops in winter, cold air is denser and sinks downward, and air pollution is trapped in the cold air. Another reason is also a higher usage of fossil-fuel combustion from winter heating. Speaking of ozone (O3), it is mainly caused by chemical reactions powered by heat and sunlight so its level tends to increase when the temperature is warmer.
+<br/>
+
+```{r, fig.width=2, fig.height=2, eval=T, out.width= '100%'}
+
+#Create a function for plotting the seasonality charts
+plotSeasonality <- function (inputs) {
+  Type_select <- inputs
+  airquality_season_temp <- airquality_season %>%
+    left_join(country_lon_lat, by = "Country.Code3") %>%
+    filter(Type == Type_select)
+  
+airquality_season_avg <- airquality_season_temp %>%
+    group_by(month) %>%
+    summarise(
+      pm25 = mean(MonthlyAveragepm25, na.rm = TRUE),
+      co = mean(MonthlyAverageco, na.rm = TRUE),
+      pm10 = mean(MonthlyAveragepm10, na.rm = TRUE),
+      o3 = mean(MonthlyAverageo3, na.rm = TRUE),
+      so2 = mean(MonthlyAverageso2, na.rm = TRUE),
+      no2 = mean(MonthlyAverageno2, na.rm = TRUE))
+    
+    monthabb <- month.abb[as.numeric(airquality_season_avg$month)]
+    
+    fig <- plot_ly()
+    fig <- fig %>% 
+      add_trace(x = ~airquality_season_avg$month, y = ~airquality_season_avg$pm25, name = "PM2.5", mode = "lines+markers", type = "scatter") %>% 
+      add_trace(x = ~airquality_season_avg$month, y = ~airquality_season_avg$pm10, name = "PM10", mode = "lines+markers", type = "scatter") %>% 
+      add_trace(x = ~airquality_season_avg$month, y = ~airquality_season_avg$co, name = "CO", mode = "lines+markers", type = "scatter", yaxis = "y2") %>% 
+      add_trace(x = ~airquality_season_avg$month, y = ~airquality_season_avg$o3, name = "O3", mode = "lines+markers", type = "scatter", yaxis = "y2") %>% 
+      add_trace(x = ~airquality_season_avg$month, y = ~airquality_season_avg$so2, name = "SO2", mode = "lines+markers", type = "scatter", yaxis = "y2") %>% 
+      add_trace(x = ~airquality_season_avg$month, y = ~airquality_season_avg$no2, name = "NO2", mode = "lines+markers", type = "scatter", yaxis = "y2")
+    
+    ay <- list(
+      overlaying = "y",
+      side = "right",
+      title = "<b>CO(ppm) and O3, SO2, NO2(ppb)</b>",
+      rangemode = "tozero", automargin = T)
+    
+#Set figure title, x and y-axes titles
+    fig %>% layout(
+      title = sprintf("<b>%s - Monthly air pollution levels<b>",inputs), 
+      yaxis2 = ay,
+      xaxis = list(title = " ",tickvals = c(1,2,3,4,5,6,7, 8,9,10,11,12),ticktext = monthabb),
+      yaxis = list(title="<b>PM2.5, PM10 (mcg per cubic meter)<b>", rangemode = "tozero"),
+      showlegend = TRUE,
+      legend = list(orientation = 'h')
+    )
+}
+#Plot "North"
+plotSeasonality("North")
+ 
+
+```
+<br/>
+Regarding the "South" group, seasons in this group are opposite to those in the North group due to the tilt of the Earth's axis as it revolves around the sun. For example, in June, when the Northern hemisphere is tilted toward the sun and receives more sunlight, the Southern hemisphere is tilted away from the sun and receives less sunlight. Therefore, we would say that, for the "South" group, winter is around June to August, while summer is around December to February. 
+
+As for the data and the chart, we found that air pollution levels of PM2.5, PM10, CO, and NO2 reached their highest points in June-July which are in the winter months while the levels reached the lowest points in December-February which are in the summer months. Referring to the ozone (O3) level in the north group, likewise, the O3 level in the south group is opposite of the other pollutants. Lastly, speaking of the lowest pollutants among the other pollutants, the SO2 level fluctuated all year and slightly went up in August. Our observation from airquality_season and airquality_seasonav tables is that the SO2 level in Argentina increased dramatically from the country average level in August by approximately 181.3 percent.
+<br/>
+```{r, fig.width=2, fig.height=2, eval=T, out.width= '100%'}
+
+#Plot "South"
+plotSeasonality("South")
+
+```
+<br/>
+Regarding the "Tropics" group, tropical countries usually experience only two seasons which are dry and wet seasons and the annual temperature range in tropical climates is normally very small. Depending on the location of the region, the wet and dry seasons are varied. Tropical climates can be divided into 3 main groups, Tropical rainforest climate which has high temperature and high precipitation all year round (no dry season), Tropical monsoon climate which has the wet season from mid-June to September, and the cold/hot dry seasons for the rest of the year. For the last group, Tropical savanna climate, the seasonal patterns of the countries within this group can be significantly varied.
+
+Due to the narrow range in temperature and different season patterns, the seasonal trend of air pollutants is difficult to observe and not as obvious as the north and the south groups. Nevertheless, we found that PM2.5, PM10, NO2, and CO were lower between June - October than the levels in December-January. The reason could be that, although seasonal patterns of the countries in this group are varied, many countries, especially the countries in monsoon climate have more precipitation between June and September which helps reduce the amount of air pollution in the air. On the other hand, the O3 level fluctuated all year round. In our opinion, this is because, throughout the year, the differences in temperature, which is the main cause of O3, are marginal, SO2 tended to be at the highest level at the beginning of the year and decrease throughout the year. Our observation from the airquality_season and the airquality_seasonav tables is that the SO2 level in Vietnam increased dramatically from the country average level in February and March by approximately 194.19 percent and 236.45 percent, respectively.
+
+For further study, we believe that it's worth conducting a deeper analysis for 3 sub-categories within the Tropics group to see if the seasonal pattern is easier to observe within the sub-category.
+<br/>
+```{r, fig.width=2, fig.height=2, eval=T, out.width= '100%'}
+
+#Plot "Tropics"
+plotSeasonality("Tropics")
+
+```
+In conclusion, we can say that Air pollution changes with the seasons. The result is easily observed in the countries located above the Northern Tropic and below the Southern Tropic while the result for the countries located around the Equator is difficultly observed. This is because the temperature differences between seasons in the first two groups are much higher than the temperature differences in the latter group. Regarding the concerning six air pollutants, PM2.5, PM10, NO2, CO concentration levels are usually high in winter and low in summer; conversely, the O3 level is in an opposite way. However, SO2 levels fluctuate throughout the year.
+
+
+#### **2. Inferential Statistics**
+
+##### **2.1   What are the factors that impact air pollution the most(GDP and Agriculture)?**
+
+To get a better understanding of air pollution, it's very important to understand what factors attribute to it. Many agriculture activities, such as the burning of agriculture residues, chemical fertilizer, and farming, have long been criticized as a major source of air pollution. In addition, we believe that economic development is also another important factor. According to the WHO report, more than 90% of air pollution-related deaths occur in low and middle-income countries because these countries tend to have lax regulations regarding air quality as well as still rely on coal or fossil fuel power. These are the reasons why we select Agriculture as a proxy for the intensity of agriculture activities and GDP as a proxy for economic development in this model.
+
+In order to analyze what are the factors that impact Air Pollution the most, we decided to use OLS regressions, to see if the correlation coefficients are significantly different from 0 and determine which of the models have the best predictive power, adjusting for the number of variables (lowest p-value). In addition, we will be able to identify which factor is the most significant to Air pollution.
+
+First, we started analyzing the first model called `mod1` which contains Air pollution as our dependent variable and GDP as our independent variable: `Air.Pollution ~ GDP`. By executing the summary of the model we can observe that the p-value of the model is **2.39e-04**, which means that it is statistically significant, and the coefficient GDP shows that has a negative correlation with air pollution and is statistically significant different from 0.
+
+Secondly, we review the model `mod2` which contains Air pollution as our dependent variable and Agriculture as our independent variable: `Air.Pollution ~ Agriculture`. The result for this model shows us that the p-value of the model was higher than the previous model(mod1) with a value of **8.32e-07**, in this case, Agriculture had a positive correlation with air pollution and also being statistically significant different from 0.
+
+Finally, we build a bigger model from `mod2` by adding first Agriculture and then GDP, we called this model `mod3`: `Air.Pollution ~ Agriculture + GDP`. After executing the summary of this model, we identified that GDP was no longer significantly different from 0, and the p-value of the model increased to **3.57e-06**. Therefore, the model with the best predictive power is the second model `mod2`, because the p-value is the lowest from the models we have, and also due to the highest value of adjusted  R^2^ that this model has which is **0.131**, the other two have *0.0723* (*mod1*), and *0.13* (*mod3*). Thus, we conclude that Agriculture can explain **13.1%** of the variation of PM2.5 level. In addition, the beta coefficient of 0.535 means that if the percentage of agriculture output to GDP increases by 1%, PM2.5 is likely to increase by 0.535 microgram per cubic meter (approximately 2% of the global average level).
+
+- Comparison between Mod1, Mod2, and Mod3
+```{r, echo=FALSE, message=FALSE, results='asis', out.width= '100%'}
+
+prep.gdp <- gdp %>%
+  gather(year, val, "1990":"2020", factor_key = FALSE) %>%
+  rename("GDP" = "val")
+prep.gdp$year <- as.numeric(as.character(prep.gdp$year))
+
+prep.agri <- agriculture %>%
+  gather(year, val, "1990":"2016", factor_key = FALSE) %>%
+  rename("Agriculture" = "val")
+prep.agri$year <- as.numeric(as.character(prep.agri$year))
+
+agri_airpol_gdp <- prep.airpol %>%
+  left_join(prep.gdp,
+    by = c(
+      "Country.Code" = "Country.Code", "year" = "year",
+      "Country.Name" = "Country.Name"
+    )
+  ) %>%
+  left_join(prep.agri,
+    by = c(
+      "Country.Code" = "Country.Code", "year" = "year",
+      "Country.Name" = "Country.Name"
+    )
+  )
+
+regression.2016 <- agri_airpol_gdp %>%
+  filter(year == "2016")
+regression.2016 <- na.omit(regression.2016)
+regression.2016 <- rename(regression.2016, Air.Pollution = 'Air Pollution')
+
+mod1 <- lm(Air.Pollution ~ GDP, data = regression.2016)
+mod2 <- lm(Air.Pollution ~ Agriculture, data = regression.2016)
+mod3 <- lm(Air.Pollution ~ Agriculture + GDP, data = regression.2016)
+
+fstat <- summary(mod1)$fstatistic
+  pval_mod1 <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)
+fstat <- summary(mod2)$fstatistic
+  pval_mod2 <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)
+fstat <- summary(mod3)$fstatistic
+  pval_mod3 <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)
+  
+stargazer::stargazer(mod1,mod2,mod3, type = "html",
+                    add.lines = list(c("F Statistic (p-value)",sprintf("%.2e",pval_mod1),sprintf("%.2e",pval_mod2),sprintf("%.2e",pval_mod3))), table.layout = "=ldc-tsa-n")
+
+
+```
+
+```{r, fig.width=2, fig.height=2, eval=T, out.width= '100%'}
+
+ggplotRegression <- function (fit) {
+  ggplot(fit$model, aes_string(x = names(fit$model)[2], y = names(fit$model)[1])) + 
+    geom_point() +
+    stat_smooth(method = "lm", col = "red") +
+    labs(title = paste("Adj R2 = ",signif(summary(fit)$adj.r.squared, 5),
+                       "Intercept =",signif(fit$coef[[1]],5 ),
+                       "Slope =",signif(fit$coef[[2]], 5),
+                       "P-value =",signif(summary(fit)$coef[2,4], 5)))
+}
+
+g <- ggplotRegression(mod1)
+a <- ggplotRegression(mod2)
+
+gg <- ggplotly(g)
+aa <- ggplotly(a)
+
+subplot(aa,gg, nrows = 1,shareY = TRUE, titleX = TRUE)%>%
+        layout(title= "Determinant factors for Air Pollution",
+               annotations = list( 
+                 list( 
+                      x = 0.2,  
+                      y = 1.0,  
+                      text = sprintf("      Adj R2= %.2f | p-value = %.2e",summary(mod2)$adj.r.squared,anova(mod2)$'Pr(>F)'[1]),  
+                      xref = "paper",  
+                      yref = "paper",  
+                      xanchor = "center",  
+                      yanchor = "bottom",  
+                      showarrow = FALSE),
+                 list( 
+                      x = 0.8,  
+                      y = 1,  
+                      text = sprintf("Adj R2= %.2f | p-value = %.2e     ",summary(mod1)$adj.r.squared,anova(mod1)$'Pr(>F)'[1]),  
+                      xref = "paper",  
+                      yref = "paper",  
+                      xanchor = "center",  
+                      yanchor = "bottom",  
+                      showarrow = FALSE)))
+
+```
+
+Our recommendations for future studies should take into account more factors that could shape Air pollution levels such as; Industrial Emissions, Transportation, Open burning of garbage waste, Wildfires, Burning of Fossil Fuels because we notice that by only including GDP and Agriculture, the significance of the variables were affected, and probably if there were more factors, the prediction power of the model could have a major increase and the significance of the coefficients as well.
+
+##### **2.2   As a result of question 2.1, Are landlocked countries more polluted?**
+
+We also would like to investigate the relationship between air pollutants and geographical conditions. In this study, we focus on landlocked countries with the main assumption that landlocked countries have less wind and precipitation, and are likely to have more air pollution concentration.
+
+First, we defined a dummy variable, called 'Landlock', for landlocked countries by assigning 1 for landlocked countries and 0 for not-landlocked countries and regress on air pollution. The first model, `mod4`, contains Air pollution as our dependent variable and Landlock as our independent variable: `Air.Pollution ~ Landlock`. The result of the model presents that the p-value of the model is **0.0724**, which means that it is statistically significant at a 90% confidence level. Therefore, we reject the null hypothesis (landlock doesn't cause air pollution(PM2.5)) and accept the alternative hypothesis (landlock is one of the factors causing air pollution). However, the coefficient of determination(R squared) was only **1.9%**. In other words, the model has low prediction power. 
+
+Subsequently, we included only Agriculture in `mod5`: `Air.Pollution ~ Agriculture + Landlock` and both Agriculture and GDP in `mod6`: `Air.Pollution ~ GDP + Agriculture + Landlock`. The result shows that Landlock was no longer statistically different from 0. We concluded that landlocked countries are not more polluted.
+
+- Comparison among Mod4, Mod5, and Mod6
+```{r, echo=FALSE, message=FALSE, results='asis'}
+
+regression.2016 <- regression.2016 %>%
+    left_join(landlocked_countries, by = c("Country.Code" =   
+                                           "Country.Code3")) %>%
+    rename(Landlock= "dummy") %>% select( -Surrounding.countries) 
+
+regression.2016$Landlock[sapply(regression.2016$Landlock, is.na)] <- 0
+
+mod4 <- lm(Air.Pollution ~ Landlock, data = regression.2016)
+mod5 <- lm(Air.Pollution ~ Agriculture + Landlock, data = regression.2016)
+mod6 <- lm(Air.Pollution ~ GDP+Agriculture + Landlock, data = regression.2016)
+
+fstat <- summary(mod4)$fstatistic
+  pval_mod4 <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)
+  
+fstat <- summary(mod5)$fstatistic
+  pval_mod5 <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)
+
+fstat <- summary(mod6)$fstatistic
+  pval_mod6 <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)  
+  
+stargazer::stargazer(mod4, mod5,mod6, type = "html",
+                     add.lines = list(c("F Statistic (p-value)",sprintf("%.2e",pval_mod4),sprintf("%.2e",pval_mod5),sprintf("%.2e",pval_mod6))), table.layout = "=ldc-tsa-n")
+
+```
+
+```{r, fig.width=2, fig.height=2, eval=T, out.width= '100%'}
+
+g <- ggplotRegression(mod4)
+a <- ggplotRegression(mod5)
+gg <- ggplotly(g)
+aa <- ggplotly(a)
+
+subplot(gg,aa, nrows = 1,shareY = TRUE, titleX = TRUE)%>%
+        layout(title= "Determinant factors for Air Pollution",
+               annotations = list( 
+                 list( 
+                      x = 0.2,  
+                      y = 1.0,  
+                      text = sprintf("      Adj R2= %.2f | p-value = %.2e",summary(mod4)$adj.r.squared,anova(mod4)$'Pr(>F)'[1]),  
+                      xref = "paper",  
+                      yref = "paper",  
+                      xanchor = "center",  
+                      yanchor = "bottom",  
+                      showarrow = FALSE),
+                 list( 
+                      x = 0.8,  
+                      y = 1,  
+                      text = sprintf("      Adj R2= %.2f | p-value = %.2e",summary(mod5)$adj.r.squared,anova(mod5)$'Pr(>F)'[1]),  
+                      xref = "paper",  
+                      yref = "paper",  
+                      xanchor = "center",  
+                      yanchor = "bottom",  
+                      showarrow = FALSE)))
+
+```
+
+Our recommendations for further development are, firstly, obtaining meteorological data such as wind speed, precipitation level, humidity. These factors could be directly related to air pollution concentration. Secondly, conduct study at the city level, which will be more precise than conducting the study at the country level, because different cities in the same country might have different geographical and weather conditions. 
+
+
+##### **2.3   As a result of question 1.2, the variables “diseases” considered highly correlated with air pollution will be chosen for this question; What has been the effect of air pollution on some health diseases mortality?**
+
+In order to analyze the effect of Air Pollution on the higher correlated mortality diseases, we decided to use the Stepwise regression method by Forward selection based on AIC "Akaike
+Information Criteria" to determine which of the models has the best predictive power, adjusting for the number of variables (highest Adjusted R^2^ and lower AIC). In addition, we will be able to identify which variables among all are the most significant to each disease.
+
+```{r, echo = FALSE, message = FALSE }
+airquality_by_year <- airquality_daily %>%
+  mutate(
+    year = format(Date, "%y"),
+    year = format(Date, "%Y")
+  ) %>%
+  group_by(year, Country.Name) %>%
+  summarise(
+    "PM2.5" = mean(Averagepm25, na.rm = TRUE),
+    "CO" = mean(Averageco, na.rm = TRUE),
+    "PM10" = mean(Averagepm10, na.rm = TRUE),
+    "O3" = mean(Averageo3, na.rm = TRUE),
+    "SO2" = mean(Averageso2, na.rm = TRUE),
+    "NO2" = mean(Averageno2, na.rm = TRUE)
+  ) %>%
+  relocate(year, .before = "PM2.5") %>%
+  left_join(iso_country_codes, by = "Country.Name") %>%
+  select(-Country.Code2) %>%
+  relocate(Country.Code3, .before = year)
+airquality_by_year[sapply(airquality_by_year, is.nan)] <- NA
+airquality_by_year$year <- as.numeric(as.character(airquality_by_year$year))
+
+prep.mortality.Q2.3 <- select(
+  prep.mortality, location, Country.Code3, year,
+  "Neonatal preterm birth", "Other neonatal disorders",
+  "Sudden infant death syndrome", "Lower respiratory infections",
+  "Hemolytic disease and other neonatal jaundice"
+)
+
+AIC.Q2.3 <- airquality_by_year %>%
+  left_join(prep.mortality.Q2.3,
+    by = c(
+      "Country.Code3" = "Country.Code3",
+      "year" = "year", "Country.Name" = "location"
+    )
+  ) %>%
+  left_join(prep.gdp,
+    by = c(
+      "Country.Code3" = "Country.Code", "year" = "year",
+      "Country.Name" = "Country.Name"
+    )
+  )
+
+Q2.3_2016 <- AIC.Q2.3 %>%
+  filter(year == "2016") %>%
+  rename(Neonatal.preterm.birth = "Neonatal preterm birth", Other.neonatal.disorders = "Other neonatal disorders", Sudden.infant.death.syndrome = "Sudden infant death syndrome", Lower.respiratory.infections = "Lower respiratory infections", Hemolytic.disease.and.other.neonatal.jaundice = "Hemolytic disease and other neonatal jaundice")
+Q2.3_2016 <- na.omit(Q2.3_2016)
+
+```
+
+Before start analyzing the results of the various models that we will apply to the top correlated diseases with air pollution, we wanted to review first if some of the pollutants of air pollution(independent variables) are correlated, so we can discard possible multicollinearity in our models. 
+
+On the following Correlation Matrix, we can observe that most of the independent variables have a low correlation, except for PM2.5 and PM10 where we can visualize a high correlation of 0.89, as a consequence, we decided to not consider PM2.5. 
+
+```{r, echo = FALSE, message = FALSE, out.width= '100%'}
+
+explore <- subset(Q2.3_2016, select = c("PM2.5", "CO", "PM10", "O3", "SO2", "NO2", "GDP"))
+pairs.panels(explore, lm = TRUE, cor = TRUE)
+
+```
+
+In addition, we consider in the model the variable GDP as an omitted control variable to avoid omitted variable bias, which happens when a variable not included in the model influence both Y and X. In our example, poor countries both have air pollution and high mortality rates, but it does not mean that high air pollution leads to high mortality because countries are poor.
+
+Top 5 Correlated Mortality diseases caused by Air Pollution
+
+ 1. Neonatal preterm birth
+ 2. Other neonatal disorders
+ 3. Sudden infant death syndrome
+ 4. Lower respiratory infections
+ 5. Hemolytic disease and other neonatal jaundice
+
+The first base model that we consider was `myfull1` which contains the dependent variable followed by the tilde "~", and the sum of all independent variables; `Neonatal.preterm.birth ~ PM10 + CO + O3 + SO2 + NO2 + GDP`. Then we applied the forward selection based on AIC in our base model, and as a result, we observed a small improvement in the predictive power of the output model, due to the decrease of the p-value from 1.01e-07 to 3.1e-08 and increase of the adjusted R^2^ from 0.671 to 0.675. In addition, we visualize that the pollutants PM10, SO2, and NO2 are statistically significant with Neonatal preterm birth death rate, PM10, and NO2 with a positive correlation and SO2 with a negative one. 
+
+Moreover, the PM10 beta coefficient of 0.011 means that if PM10 increases by 1 microgram per cubic meter (holding everything else constant), the mortality of Neonatal preterm birth is likely to increase by 0.011 per 100k population (approximately 5% of the average mortality rate of Neonatal preterm birth). Surprisingly, we also find that the beta coefficient of SO2 is significantly negative. However, this result is similar to the study of Lipfert et al [2000] who find the association between infant mortality and PM10 and also find that Sulfate is a strong negative predictor of infant mortality. In the paper, they opine that most observers would be reluctant to accept the negative relationship between pollution and mortality as causal, and conclude that sulfate has no relationship with infant mortality, although the coefficient is negative and statistically significant.
+
+
+- Stepwise regression method by Forward selection based on AIC applied to the base model
+```{r, echo = FALSE, message = FALSE, results='hide'}
+# Regression considering Neonatal preterm birth
+
+mynull1 <- lm(Neonatal.preterm.birth ~ 1, data = Q2.3_2016)
+myfull1 <- lm(Neonatal.preterm.birth ~ PM10 + CO + O3 + SO2 + NO2 + GDP, 
+              data = Q2.3_2016)
+forward.AIC1 <- step(mynull1, scope = list(lower = mynull1, upper = myfull1),
+                     direction = "forward")
+```
+
+```{r, echo = FALSE, message = FALSE}
+regression1 <- ols_step_forward_aic(myfull1)
+plot(regression1)
+
+```
+
+- Comparison between the Base Model and the Final Model Output
+
+```{r, echo = FALSE, message = FALSE, results='asis', out.width= '100%'}
+
+fstat <- summary(myfull1)$fstatistic
+  pval_myfull1 <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)
+fstat <- summary(forward.AIC1)$fstatistic
+  pval_AIC1 <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)
+  
+stargazer::stargazer(myfull1,forward.AIC1, type = "html",
+                    add.lines = list(c("F Statistic (p-value)",sprintf("%.2e",pval_myfull1),sprintf("%.2e",pval_AIC1))), table.layout = "=ldc-tsa-n")
+
+```
+
+
+The second base model that we consider was `myfull2` which contain the dependent variable followed by the tilde "~", and the sum of all independent variables; `Other.neonatal.disorders~ PM10 + CO + O3 + SO2 + NO2 + GDP`. Then we applied the forward selection based on AIC in our base model, and as a result, we observed an improvement in the predictive power of the output model, due to the decrease of the p-value from 2.11e-04 to 1.93e-06 and the increase of the adjusted R^2^ from 0.45 to 0.49. Furthermore, we visualize that only the pollutants PM10 and SO2 were statistically significant with Other neonatal disorders death rate and with the lowest AIC criteria to be considered on the model, the rest of the independent variables were discarded from the final model output. In addition, the PM10 beta coefficient of 0.008 means that if PM10 increases by 1 microgram per cubic meter (holding everything else constant), the mortality rate of Other neonatal disorders is likely to increase by 0.008 per 100k population (approximately 10% of the average mortality rate of Other neonatal disorders).
+
+
+- Stepwise regression method by Forward selection based on AIC applied to the base model
+```{r, echo = FALSE, message = FALSE, results='hide'}
+
+#  Regression considering Other neonatal disorders
+
+mynull2 <- lm(Other.neonatal.disorders ~ 1, data = Q2.3_2016)
+myfull2 <- lm(Other.neonatal.disorders ~ PM10 + CO + O3 + SO2 + NO2 + GDP, 
+              data = Q2.3_2016)
+forward.AIC2 <- step(mynull2, scope = list(lower = mynull2, upper = myfull2),
+                     direction = "forward")
+
+```
+
+```{r, echo = FALSE, message = FALSE}
+regression2 <- ols_step_forward_aic(myfull2)
+plot(regression2)
+```
+- Comparison between the Base Model and the Final Model Output
+```{r, echo = FALSE, message = FALSE, results='asis', out.width= '100%'}
+
+fstat <- summary(myfull2)$fstatistic
+  pval_myfull2 <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)
+fstat <- summary(forward.AIC2)$fstatistic
+  pval_AIC2 <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)
+  
+stargazer::stargazer(myfull2,forward.AIC2, type = "html",
+                    add.lines = list(c("F Statistic (p-value)",sprintf("%.2e",pval_myfull2),sprintf("%.2e",pval_AIC2))), table.layout = "=ldc-tsa-n")
+
+
+```
+
+
+The third base model that we consider was `myfull3` which contains the dependent variable followed by the tilde "~", and the sum of all independent variables; `Sudden.infant.death.syndrome ~ PM10 + CO + O3 + SO2 + NO2 + GDP`. Then we applied the forward selection based on AIC in our base model, and as a result, we observed a hardly noticeable improvement in the predictive power of the output model, due to the decrease of the p-value from 2.25e-04 to 2.01e-05 and the increase of the adjusted R^2^ from 0.449 to 0.455. Also, we visualize that only the pollutant PM10 is statistically significant with Sudden infant death syndrome death rate with a positive correlation of 1.76e-05. In addition, the PM10 beta coefficient of 0.00002 means that if PM10 increases by 1 microgram per cubic meter (holding everything else constant), the mortality of Sudden infant death syndrome is likely to increase by 0.00002 per 100k population (approximately 1.5% of the average mortality rate of Sudden infant death syndrome).
+
+- Stepwise regression method by Forward selection based on AIC applied to the base model
+```{r, echo = FALSE, message = FALSE, results='hide'}
+
+#  Regression considering Sudden infant death syndrome
+
+mynull3 <- lm(Sudden.infant.death.syndrome ~ 1, data = Q2.3_2016)
+myfull3 <- lm(Sudden.infant.death.syndrome ~ PM10 + CO + O3 + SO2 + NO2 + GDP, 
+              data = Q2.3_2016)
+forward.AIC3 <- step(mynull3, scope = list(lower = mynull3, upper = myfull3),
+                     direction = "forward")
+
+```
+
+```{r, echo = FALSE, message = FALSE}
+regression3 <- ols_step_forward_aic(myfull3)
+plot(regression3)
+```
+
+- Comparison between the Base Model and the Final Model Output
+
+```{r, echo = FALSE, message = FALSE, results='asis', out.width= '100%'}
+
+fstat <- summary(myfull3)$fstatistic
+  pval_myfull3 <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)
+fstat <- summary(forward.AIC3)$fstatistic
+  pval_AIC3 <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)
+  
+stargazer::stargazer(myfull3,forward.AIC3, type = "html",
+                    add.lines = list(c("F Statistic (p-value)",sprintf("%.2e",pval_myfull3),sprintf("%.2e",pval_AIC3))), table.layout = "=ldc-tsa-n")
+
+```
+
+The fourth base model that we consider was `myfull4` which contain the dependent variable follow by the tilde "~", and the sum of all independent variables; `Lower.respiratory.infections ~ PM10 + CO + O3 + SO2 + NO2 + GDP`. Then we applied the forward selection based on AIC in our base model, and as a result, we observed a slight improvement in the predictive power of the output model, due to the decrease of the p-value from 0.0259 to 0.00207 and the increase of the adjusted R^2^ from 0.223 to 0.283. Also, we visualize that the pollutants PM10 and SO2 are statistically significant with Lower respiratory infections death rate, PM10 with a positive correlation of 0.0635, and SO2 with a negative correlation of -0.1489. In addition, the PM10 beta coefficient of 0.063 means that if PM10 increases by 1 microgram per cubic meter (holding everything else constant), the mortality of Lower respiratory infections is likely to increase by 0.063 per 100k population (approximately 2.5% of the average mortality rate of Lower respiratory infections).
+
+- Stepwise regression method by Forward selection based on AIC applied to the base model
+```{r, echo = FALSE, message = FALSE, results='hide'}
+
+#  Regression considering Lower respiratory infections
+
+mynull4 <- lm(Lower.respiratory.infections ~ 1, data = Q2.3_2016)
+myfull4 <- lm(Lower.respiratory.infections ~ PM10 + CO + O3 + SO2 + NO2 + GDP, 
+              data = Q2.3_2016)
+forward.AIC4 <- step(mynull4, scope = list(lower = mynull4, upper = myfull4),
+                     direction = "forward")
+
+```
+
+```{r, echo = FALSE, message = FALSE}
+regression4 <- ols_step_forward_aic(myfull4)
+plot(regression4)
+```
+
+- Comparison between the Base Model and the Final Model Output
+
+```{r, echo = FALSE, message = FALSE, results='asis', out.width= '100%'}
+
+fstat <- summary(myfull4)$fstatistic
+  pval_myfull4 <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)
+fstat <- summary(forward.AIC4)$fstatistic
+  pval_AIC4 <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)
+  
+stargazer::stargazer(myfull4,forward.AIC4, type = "html",
+                    add.lines = list(c("F Statistic (p-value)",sprintf("%.2e",pval_myfull4),sprintf("%.2e",pval_AIC4))), table.layout = "=ldc-tsa-n")
+
+```
+
+The fifth base model that we consider was `myfull5` which contain the dependent variable follow by the tilde "~", and the sum of all independent variables; `Hemolytic.disease.and.other.neonatal.jaundice ~ PM10 + CO + O3 + SO2 + NO2 + GDP`. Then we applied the forward selection based on AIC in our base model, and as a result, we observed an improvement in the predictive power of the output model, due to the decrease of the p-value from 3.42e-04 to 3.64e-06 and the increase of the adjusted R^2^ from 0.433 to 0.474. Also, we visualize that the pollutants PM10 and SO2 are statistically significant with Hemolytic disease and other neonatal jaundice death rates, PM10 with a positive correlation of 0.001332 and SO2 with a negative correlation of -0.003179. In addition, the PM10 beta coefficient of 0.001 means that if PM10 increases by 1 microgram per cubic meter (holding everything else constant), the mortality of this disease is likely to increase by 0.001 per 100k population (approximately 14% of the average mortality rate of Hemolytic disease and other neonatal jaundice).
+
+- Stepwise regression method by Forward selection based on AIC applied to the base model
+```{r, echo = FALSE, message = FALSE, results='hide'}
+
+#  Regression considering Hemolytic disease and other neonatal jaundice
+
+mynull5 <- lm(Hemolytic.disease.and.other.neonatal.jaundice ~ 1, data = Q2.3_2016)
+myfull5 <- lm(Hemolytic.disease.and.other.neonatal.jaundice ~ PM10 + CO + O3 + SO2 + NO2 + GDP, data = Q2.3_2016)
+forward.AIC5 <- step(mynull5, scope = list(lower = mynull5, upper = myfull5),
+                     direction = "forward")
+
+```
+
+```{r, echo = FALSE, message = FALSE}
+regression5 <- ols_step_forward_aic(myfull5)
+plot(regression5)
+```
+
+- Comparison between the Base Model and the Final Model Output
+
+```{r, echo = FALSE, message = FALSE, results='asis', out.width= '100%'}
+
+fstat <- summary(myfull5)$fstatistic
+  pval_myfull5 <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)
+fstat <- summary(forward.AIC5)$fstatistic
+  pval_AIC5 <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)
+  
+stargazer::stargazer(myfull5,forward.AIC5, type = "html",
+                    add.lines = list(c("F Statistic (p-value)",sprintf("%.2e",pval_myfull5),sprintf("%.2e",pval_AIC5))), table.layout = "=ldc-tsa-n")
+
+```
+
+As we can observe from the previous analysis, the pollutant PM10 was selected as the first option on our stepwise regression due to the high adjusted R^2^ and the lowest AIC value among our independent variables, also it was statistically significant different from 0 with the considered diseases. Subsequently, the pollutant SO2 was the second more used on the final model output but with a negative correlation with most of the correlated diseases. 
+
+Furthermore, as we can see on the comparison of our models, most of them had a slight improvement from the base model of each disease, meaning that there should be other variables that we could have included, to visualize a higher improvement on the final output of the model, but we can say that Air pollution is one of the factors that influence the mortality rate of these diseases.
+
+A curious fact that we saw after analyzing the top correlated diseases was the relation of infant deaths among most of them, a link between the pollutant PM10 could be taken into account for further studies to determine if the effect of particulate matter from PM10 on infant health is the source for the incremental of infant mortality levels.
