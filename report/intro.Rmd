@@ -1,0 +1,31 @@
+# Introduction
+
+```{r, echo = FALSE, message = FALSE}
+source(here::here("scripts/setup.R"))
+```
+
+We have chosen the theme of air pollution because global warming is a battle that will define our future as a species. Although more and more people from different backgrounds such as scientists, economists, or politicians are trying to prevent this crisis, no concrete amelioration has been registered so far. We believe that it is key to better understand the scope of air pollution’s impact on different metrics to realize the importance and emergency of the problem. We are especially interested in this, that this crisis affects multiple themes, such as health, nature, our economy, and its growth. However, for this project, we want to focus on the impact of air pollution on one of these, namely health. 
+
+While our research will focus on global issues as well as a cross-country analysis, we would like to use the fact that we come from 3 different countries (Mexico, Thailand, and Switzerland) to make a special focus on these countries when presenting results. These countries are very different in terms of development and growth, so we find it interesting to compare the different factors that affect air pollution in each of these places. Indeed, our countries being on 3 different continents, the different factors that affect air pollution can come from different sectors (agriculture, industries, ...) and different geographical areas (north, south, plateau, mountain, etc.). If we are able to, we would like to make a special focus on these different factors when presenting our results.
+
+* **Related Work**
+
+
+
+* **Research questions**
+
+#### 1. Descriptive Statistics
+
+* 1.1   How have the air pollution levels changed from 1990 to 2019? How has mortality rate changed?
+* 1.2   What are the diseases with a higher correlation with air pollution?
+* 1.3   Does air pollution change with the seasons?
+
+#### 2. Inferential Statistics
+
+* 2.1   What are the factors that impact air pollution the most(GDP, geography, transportation, industry.)?
+* 2.2   As a result of question 2.1, Are landlocked countries more polluted?
+* 2.3   As a result of question 1.2, the variables “diseases” considered highly correlated with air pollution will be chosen for this question; What has been the effect of air pollution on some health diseases mortality?
+* 2.4   What are the factors that impact air pollution the most in our respective countries? How do they compare with the continent they are in?
+
+
+

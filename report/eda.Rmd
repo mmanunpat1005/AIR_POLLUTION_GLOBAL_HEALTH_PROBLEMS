@@ -1,0 +1,535 @@
+## Exploratory data analysis
+
+```{r, echo = FALSE, message = FALSE}
+source(here::here("scripts/setup.R"))
+```
+
+#### **Table 1 - Global Mortality Rate - Air Pollution**
+
+The most important variables in this table will be the number of deaths of each disease by year globally (per 100k population). This variable will be used to know which are the deadliest diseases caused by particulate matter pollution, and to determine which ones are correlated with air pollution.
+
+We can observe which are the top 5 global diseases that are caused by air pollutants, as our null hypothesis, we can mention that probably these top 5 diseases could be the highest correlated with air pollutants. In the analysis section, we will formulate a correlation matrix in order to confirm or reject this hypothesis.
+
+From the chart, we can visualize a constant increment of mortality rates across the years by most of the diseases with Ischemic heart disease above of them, while the Lower respiratory diseases seem to go down through the years. 
+
+
+```{r echo=FALSE, message=FALSE}
+
+mortality_rate_wider <- mortality_rate %>%
+                        pivot_wider(names_from = year, values_from = val)
+mortality <- mortality_rate_wider %>%
+                    mutate(Total = select(., '1990':'2019') %>% 
+                    rowSums(na.rm = TRUE))%>%
+                    relocate(Total, .before = '1990')%>%
+                    arrange(desc(Total))
+
+top.5_diseases <- mortality%>%
+                  head(5)%>%
+                  gather(year, val, '1990':'2019', factor_key=TRUE)%>%
+                  select(cause, year, val)
+
+# Visualization
+ggplot(top.5_diseases, aes(x = as.numeric(as.character(year)), y = val)) + 
+  geom_line(aes(color = cause))+
+  geom_point(aes(color = cause))+
+  labs(title = "Global Mortality Rate Diseases",
+       subtitle = "Top 5 deadliest diseases caused by air pollutants per 100k deaths",
+       x = "Years",
+       y = "Mortality Rate (per 100k people)",
+       color = "Diseases")+
+  theme(axis.title=element_text(face="bold"),
+        plot.title=element_text(face="bold"))
+
+```
+
+
+#### **Table 2 - Mortality Rate by Country - Air Pollution** 
+
+The most important variables are `Total` and the death rate of each disease.
+`Total` represents the total death rate (per 100k population) in each country by year. These variables will be used to study how mortality rates around the world have changed. 
+
+The death rate of each disease will be used to study the correlation/regression analysis of diseases and outdoor air pollution levels. We will study the mortality rates of which diseases are correlated with air pollution the most.
+
+We generated this chart by calculating the distribution (min, 25th percentile, mean, 75th percentile, and max) of the total mortality rate per year.
+
+From the chart, we can see that ranges between the min and 75th percentile are quite narrow (between 0 and 50 deaths per 100k population) while, the max rate is significantly higher (over 125 deaths per 100k population). 
+
+```{r echo=FALSE, message=FALSE}
+
+mortality_rate_country_widegroup <- group_by(mortality_rate_country_wide, year)
+mortality_rate_country_widegroup <- summarise(mortality_rate_country_widegroup,
+                                              Mean=mean(Total, na.rm=TRUE),
+                                              Min=min(Total, na.rm=TRUE),
+                                              Max=max(Total, na.rm=TRUE),
+                                              Percent_25=quantile(Total, 
+                                              probs=c(.25)),
+                                              Percent_75=quantile(Total, 
+                                              probs=c(.75)))
+mortality_rate_country_group <- pivot_longer(mortality_rate_country_widegroup,
+                                c("Mean", "Min", "Max", "Percent_25", 
+                                  "Percent_75"), names_to = "statistic",
+                                                values_to = "val") 
+
+ggplot(data = mortality_rate_country_group, aes(x=year, y=val)) +  
+  geom_line(aes(color = statistic))+
+  geom_point(aes(color = statistic))+
+      labs(title = "Distribution of Mortality Rate",
+       subtitle = "Average/Min/Max/Percentile at 25 and 75",
+       x = "Years",
+       y = "Mortality Rate (per 100k people)",
+       color = "statistic")+
+       theme(axis.title=element_text(face="bold"),
+        plot.title=element_text(face="bold"))
+
+```
+
+Regarding the distribution of mortality rates, it leads us to see which countries have the highest death rates. Therefore, we created the top 10 countries with the highest mortality rates.
+
+From the chart, we can see that most of them are from Eastern and Southeast Europe. On top of that Bulgaria has the overall highest rate at all times; went to the peak at over 175 death per 100k population in 1997. After that, the rate significantly decreased but still remained the highest one.
+
+```{r echo=FALSE, message=FALSE}
+
+Top10 <- mortality_rate_country_wide %>% group_by(location) %>%
+         summarise(Average = mean(Total, na.rm=TRUE))%>%
+         arrange(desc(Average)) %>% head(10) %>%
+         left_join(mortality_rate_country_wide, by=c("location")) %>%
+         mutate(location = fct_reorder2(location, year, Total))
+
+ggplot(data = Top10, aes(x=year, y=Total)) +  
+  geom_line(aes(color = location))+
+  geom_point(aes(color = location))+
+  labs(title = "Top 10 countries with highest mortality rates",
+       x = "Years",
+       y = "Mortality Rate (per 100k people)",
+       color = "Countries")+
+  theme(legend.title=element_blank(),
+        axis.title=element_text(face="bold"),
+        plot.title=element_text(face="bold"))
+
+```
+
+This section is the summary of our data statistics in 1990 and 2019. Most of the statistics increased except for the min and max.
+
+```{r echo=FALSE, message=FALSE}
+
+year1990 <- min(mortality_rate_country_wide$year) #1990
+mortality_rate_country_wide_1990 <- arrange(filter(mortality_rate_country_wide, 
+                                                     year == year1990), location)
+
+#show the statistic of total death rate by country in 1990
+cat("Statistics of total death rate by country in 1990")
+summary(mortality_rate_country_wide_1990$Total)
+
+current_year <- max(mortality_rate_country_wide$year) #2019
+mortality_rate_country_wide_current <- arrange(filter(mortality_rate_country_wide, 
+                                                     year == current_year), location)
+
+#show the statistic of total death rate by country in 2019
+cat("Statistics of total death rate by country in 2019")
+summary(mortality_rate_country_wide_current$Total)
+
+```
+
+The below world maps represent the death rate by country in 1990 and 2019 respectively. We can see that mortality rates in developed countries in 2019 tend to be lower than the rates in 1990, while the rates in Asian countries tend to increase.
+
+```{r echo=FALSE, message=FALSE, results='hide'}
+
+#world map in 1990
+mapped_data<- joinCountryData2Map(mortality_rate_country_wide_1990, joinCode = "ISO3", nameJoinColumn = "Country.Code3", verbose = FALSE)
+par(mai = c(0,0,0.2,0),xaxs="i",yaxs="i")
+mapCountryData(mapped_data,nameColumnToPlot = "Total", mapTitle = "Mortality Rate World Map in 1990", colourPalette = brewer.pal(7,"YlOrRd"))
+
+```
+```{r echo=FALSE, message=FALSE, results='hide'}
+
+#world map in 2019
+mapped_data<- joinCountryData2Map(mortality_rate_country_wide_current, joinCode = "ISO3", nameJoinColumn = "Country.Code3", verbose = FALSE)
+par(mai = c(0,0,0.2,0),xaxs="i",yaxs="i")
+mapCountryData(mapped_data,nameColumnToPlot = "Total", mapTitle = "Mortality Rate World Map in 2019", colourPalette = brewer.pal(7,"YlOrRd"))
+
+```
+
+#### **Table 3 - Pollutant PM2.5** 
+
+The goal of this table is to understand the evolution of air pollution on a global scale, represented by the pollutant PM2.5 in our case. While there are details for every country, what interests us most in the first place is to see it globally.
+Thus, the most important variable in this table is the amount of PM2.5 ($\mu g/x^{3}$). This variable will be used to study the correlation between air pollution and health, as well as to study what factors cause air pollution.
+
+To do so we first compute the statistics for every year we consider. Once we have the statistics for every year, We plot time series of the statistics to see the evolution of air pollution over the years. This graph will be compared with the previous table to see if the evolution of air pollution is positively correlated with the evolution of the mortality rate.
+
+From the chart, we can see that the max value is very high even compared to the 75% percentile. It means that some countries have way more air pollution than the majority.
+
+```{r echo=FALSE, message=FALSE}
+
+Airpol_pivotlonger <- Airpol %>% gather(year, val, '1990':'2017',
+                                                   factor_key=TRUE) %>%
+                                            arrange(Country.Name)
+
+Airpol_stat <- group_by(Airpol_pivotlonger, year)
+Airpol_stat <- summarise(Airpol_stat,
+                         Mean=mean(val, na.rm=TRUE),
+                         Min=min(val, na.rm=TRUE),
+                         Max=max(val, na.rm=TRUE),
+                         Percent_25=quantile(val, probs=c(.25), na.rm=TRUE),
+                         Percent_75=quantile(val, probs=c(.75), na.rm=TRUE))
+
+Airpol_stat <- pivot_longer(Airpol_stat,
+                                c("Min", "Mean", "Max", "Percent_25", 
+                                  "Percent_75"), names_to = "statistic",
+                                                values_to = "val") 
+
+ggplot(data = Airpol_stat, aes(x=as.numeric(as.character(year)),y=val))+
+  geom_line(aes(color = statistic))+
+  geom_point(aes(color = statistic))+
+      labs(title = "Distribution of PM 2.5",
+       subtitle = "Average/Min/Max/Percentile at 25 and 75",
+       x = "Years",
+       y = "PM 2.5 (migrogram per cubic meter)",
+       color = "statistic")+
+       theme(axis.title=element_text(face="bold"),
+        plot.title=element_text(face="bold"))
+
+```
+
+Then, we created the top 10 countries with the highest PM2.5 levels. From this chart, we can see that most of them are from South Asia and the Middle East. It will be interesting to compare if the top 10 countries with the highest PM2.5 level is similar to the top 10 countries with the highest mortality. 
+
+```{r echo=FALSE, message=FALSE}
+
+Top10_Airpol <- Airpol_pivotlonger %>% group_by(Country.Code) %>%
+         summarise(Average = mean(val, na.rm=TRUE))%>%
+         arrange(desc(Average)) %>% head(10) %>%
+         left_join(Airpol, by=c("Country.Code")) %>%
+         gather(year, val, '1990':'2017', factor_key=TRUE) %>%
+         arrange(desc(Average)) %>%
+         mutate(Country.Name = fct_reorder2(Country.Name, year, val))
+
+ggplot(data = Top10_Airpol, aes(x=as.numeric(as.character(year)), y=val)) +  
+  geom_line(aes(color = Country.Name))+
+  geom_point(aes(color = Country.Name))+
+  labs(title = "Top 10 countries with highest PM 2.5",
+       x = "Years",
+       y = "PM 2.5 (migrogram per cubic meter)",
+       color = "Countries")+
+  theme(legend.title=element_blank(),
+        axis.title=element_text(face="bold"),
+        plot.title=element_text(face="bold"))
+
+```
+
+#### **Table 4 - GDP - Factor of Air Pollution**
+
+The most important variables in this table would be the `Country.Name` and the values on each year, because the name of the country will be the key among the other tables, and the value will determine if a country has a high or low GDP.
+
+The goal of this tables is to identify which countries are the ones with the highest and lowest GDP per capita, so later we can relate if the factor of a higher or lower GDP could have a direct impact on air pollution levels.
+
+We then compute the statistics for each year and plot the time series to see the evolution over time. We can observe that the countries above the 75th percentile are much richer than the rest of the world.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+gdp_pivotlonger <- gdp %>% gather(year, val, '1990':'2020',
+                                                   factor_key=TRUE) %>%
+                                            arrange(Country.Name)
+
+gdp_stat <- group_by(gdp_pivotlonger, year)
+gdp_stat <- summarise(gdp_stat,
+                         Mean=mean(val, na.rm=TRUE),
+                         Min=min(val, na.rm=TRUE),
+                         Max=max(val, na.rm=TRUE),
+                         Percent_25=quantile(val, probs=c(.25), na.rm=TRUE),
+                         Percent_75=quantile(val, probs=c(.75), na.rm=TRUE))
+
+gdp_stat <- pivot_longer(gdp_stat,
+                                c("Min", "Mean", "Max", "Percent_25", 
+                                  "Percent_75"), names_to = "statistic",
+                                                values_to = "val") 
+
+ggplot(data = gdp_stat, aes(x=as.numeric(as.character(year)),y=val))+
+  geom_line(aes(color = statistic))+
+  geom_point(aes(color = statistic))+
+      labs(title = "Distribution of GDP per capita",
+       subtitle = "Average/Min/Max/Percentile at 25 and 75",
+       x = "Years",
+       y = "GDP per capita (USD)",
+       color = "statistic")+
+       theme(axis.title=element_text(face="bold"),
+        plot.title=element_text(face="bold"))
+
+```
+From the below chart, we can visualize that the top countries of the table with the highest GDP are developed countries where the per capita value is around 40,000 to 120,000 USD.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+gdp_totals <- gdp%>%
+                    mutate(Total = select(., '1990':'2019') %>% 
+                    rowSums(na.rm = TRUE))%>%
+                    relocate(Total, .before = '1990')%>%
+                    arrange(desc(Total))
+
+gdp_top.10 <- gdp_totals%>%
+                  head(10)%>%
+                  gather(year, val, '1990':'2020', factor_key=TRUE)%>%
+                  select(Country.Name, year, val) %>%
+                  mutate(Country.Name = fct_reorder2(Country.Name, year, val))
+
+ggplot(data = gdp_top.10,aes(x=as.numeric(as.character(year)),
+                             y=val, color = Country.Name)) + 
+              geom_point() +
+              geom_line() +
+              labs(title = "Top 10 Countries with highest GDP per capita",
+                   x = "Years",
+                   y = "GDP per capita (USD)",
+                   color = "Countries")+
+              theme(axis.title=element_text(face="bold"),
+                    plot.title=element_text(face="bold"))
+
+```
+
+From the chart, we can visualize that the bottom countries of the table with the lowest GDP are undeveloped countries where the per capita value is around 500 to 15,000 USD.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+gdp_lowest.10 <- gdp_totals%>%
+                  tail(10)%>%
+                  gather(year, val, '1990':'2020', factor_key=TRUE) %>%
+                  mutate(Country.Name = fct_reorder2(Country.Name, year, val))
+
+ggplot(data = gdp_lowest.10,aes(x=as.numeric(as.character(year)),
+                                y=val, color= Country.Name)) + 
+              geom_point()+
+              geom_line()+
+              labs(title = "Top 10 Countries with lowest GDP per capita",
+                   x = "Years",
+                   y = "GDP per capita (USD)",
+                   color = "Countries")+
+              theme(axis.title=element_text(face="bold"),
+                    plot.title=element_text(face="bold")) 
+
+```
+
+#### **Table 5 - Agriculture - Factor of Air Pollution**
+
+This table helps us understand the impact of the agricultural sector on air pollution. The most important variable in this table is the proportion of agriculture in the GDP by year of each country. In the first place, this information will help to understand whether a country that is heavily based on agriculture has higher GDP. Furthermore, this data will be used to find out whether a high dependence on agriculture is positively correlated with a higher increase in air pollution. 
+
+We then computed the statistics for each year and plot the time series. We found that the % Agriculture of GDP tends to be decreasing. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+agriculture_pivotlonger <- agriculture %>% gather(year, val, '1990':'2016',
+                                                   factor_key=TRUE) %>%
+                                            arrange(Country.Name)
+
+agriculture_stat <- group_by(agriculture_pivotlonger, year)
+agriculture_stat <- summarise(agriculture_stat,
+                              Mean=mean(val, na.rm=TRUE),
+                              Min=min(val, na.rm=TRUE),
+                              Max=max(val, na.rm=TRUE),
+                              Percent_25=quantile(val, probs=c(.25), na.rm=TRUE),
+                              Percent_75=quantile(val, probs=c(.75), na.rm=TRUE))
+
+agriculture_stat <- pivot_longer(agriculture_stat,
+                                c("Mean", "Min", "Max", "Percent_25", 
+                                  "Percent_75"), names_to = "statistic",
+                                                values_to = "val") 
+
+ggplot(data = agriculture_stat, aes(x=as.numeric(year), y=val)) +  
+  geom_line(aes(color = statistic))+
+  geom_point(aes(color = statistic))+
+      labs(title = "Distribution of Agriculture",
+       subtitle = "Average/Min/Max/Percentile at 25 and 75",
+       x = "Years",
+       y = "% Agriculture of GDP",
+       color = "statistic")+
+       theme(axis.title=element_text(face="bold"),
+        plot.title=element_text(face="bold"))
+
+```
+For clarity, we have made a graph showing the 10 countries most dependent on agriculture (the largest share of GDP). Among these 10 countries, Somalia had only 1 data point in 1990 and the last data point of Comoros was missing. In 1996, over 90% of Liberia's GDP was from Agriculture but the number has decreased to lower than 40% in 2016.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+Top10_agriculture <- agriculture_pivotlonger %>% group_by(Country.Code) %>%
+         summarise(Average = mean(val, na.rm=TRUE))%>%
+         arrange(desc(Average)) %>% head(10) %>%
+         left_join(agriculture, by=c("Country.Code")) %>%
+         gather(year, val, '1990':'2016', factor_key=TRUE) %>%
+         arrange(desc(Average)) %>%
+         mutate(Country.Name = fct_reorder2(Country.Name, year, val))
+         
+ggplot(data = Top10_agriculture, aes(x=as.numeric(as.character(year)), y=val)) +  
+  geom_line(aes(color = Country.Name))+
+  geom_point(aes(color = Country.Name))+
+  labs(title = "Top 10 countries Agriculture",
+       x = "Years",
+       y = "% Agriculture of GDP",
+       color = "Countries")+
+  theme(legend.title=element_blank(),
+        axis.title=element_text(face="bold"),
+        plot.title=element_text(face="bold"))
+
+```
+
+
+#### **Table 6 - Landlocked Countries** 
+
+We will create a dummy variable for landlocked countries to study the relationship between landlocked countries and air pollution levels. Our hypothesis is that landlocked countries tend to have higher air pollution levels due to lower airflow.
+
+The below world map presents the landlocked countries in red and the rest is in gray.
+
+```{r echo=FALSE, message=FALSE, results='hide'}
+
+#world map for landlocked countries
+landlocked_countries$dummy <- 1
+mapped_data<- joinCountryData2Map(landlocked_countries, joinCode = "ISO3", nameJoinColumn = "Country.Code3", verbose = FALSE)
+par(mai = c(0,0,0.2,0),xaxs="i",yaxs="i")
+mapCountryData(mapped_data,nameColumnToPlot = "dummy", mapTitle = "Landlocked countries",missingCountryCol = "grey",addLegend = FALSE, catMethod = "categorical")
+
+```
+
+#### **Table 7 - 19 - Air Quality Pollution Levels**
+
+The most important variables are seasonality data of air pollutants (6 variables for 6 pollutants). These variables will be used to study if air pollution changes with the seasons.
+
+We created box plots for all six pollutants to show the distributions of air pollution levels around the world for each month. We observed a strong seasonality trend in PM2.5, SO2, and O3; PM2.5 and SO2 tend to be higher around between November to February and be lower in April to September while O3 has an inverse trend. For SO2, we spotted outliers in February and March. Regarding the other air pollutants, PM10, CO, and NO2, their seasonality patterns seem to be weaker.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+pm25_season_plot <- ggplot(data=airquality_season,aes(x=month,y=MonthlyAveragepm25))+                     geom_boxplot()+ labs(y="PM2.5")
+
+co_season_plot <- ggplot(data=airquality_season, aes(x=month, y=MonthlyAverageco))+
+                  geom_boxplot()+labs(y="CO")
+
+pm10_season_plot <- ggplot(data=airquality_season,aes(x=month,y=MonthlyAveragepm10))+
+                    geom_boxplot()+labs(y="PM10")
+
+o3_season_plot <- ggplot(data=airquality_season, aes(x=month, y=MonthlyAverageo3))+
+                  geom_boxplot()+labs(y="O3")
+
+so2_season_plot <- ggplot(data=airquality_season, aes(x=month, y=MonthlyAverageso2))+
+                   geom_boxplot()+labs(y="SO2")
+
+no2_season_plot <- ggplot(data=airquality_season, aes(x=month, y=MonthlyAverageno2))+
+                   geom_boxplot()+labs(y="NO2")
+
+P <- plot_grid(pm25_season_plot,co_season_plot,pm10_season_plot,o3_season_plot,so2_season_plot,no2_season_plot,ncol = 2)
+title <- ggdraw() + draw_label("Distributions of each air pollutant by month", fontface = 'bold')
+plot_grid(title, P, ncol=1, rel_heights = c(0.1,1))
+
+```
+
+
+Now we visualized the top ten countries with the highest air pollution for each air pollutant. 
+
+Regarding SO2, we spotted that the level in Vietnam spiked between January to March and then plummeted in April. 
+
+Concerning NO2, Iran had a much higher level than the other countries and the level seemed to be stable all around the year.
+
+As for O3, the level in Italy significantly increased in summer (around 4-5 times the level in winter).
+
+```{r echo=FALSE, message=FALSE,  warning=FALSE}
+
+airquality_seasonav <- airquality_season %>% group_by(Country.Name) %>%
+                      summarise(Averagepm25 = mean(MonthlyAveragepm25),
+                                Averageco = mean(MonthlyAverageco),
+                                Averagepm10 = mean(MonthlyAveragepm10),
+                                Averageo3 = mean(MonthlyAverageo3),
+                                Averageso2 = mean(MonthlyAverageso2),
+                                Averageno2 = mean(MonthlyAverageno2))
+        
+Top10_PM25 <- airquality_seasonav %>% arrange(desc(Averagepm25)) %>% head(10) %>%
+            left_join(airquality_season, by=c("Country.Name")) %>%
+            mutate(Country.Name = fct_reorder2(Country.Name, month, 
+                                               MonthlyAveragepm25))
+Top10_CO <- airquality_seasonav %>% arrange(desc(Averageco)) %>% head(10) %>%
+            left_join(airquality_season, by=c("Country.Name")) %>%
+            mutate(Country.Name = fct_reorder2(Country.Name, month, 
+                                               MonthlyAverageco))
+Top10_PM10 <- airquality_seasonav %>% arrange(desc(Averagepm10)) %>% head(10) %>%
+            left_join(airquality_season, by=c("Country.Name")) %>%
+            mutate(Country.Name = fct_reorder2(Country.Name, month, 
+                                               MonthlyAveragepm10))
+Top10_O3 <- airquality_seasonav %>% arrange(desc(Averageo3)) %>% head(10) %>%
+            left_join(airquality_season, by=c("Country.Name")) %>%
+            mutate(Country.Name = fct_reorder2(Country.Name, month, 
+                                               MonthlyAverageo3))
+Top10_SO2 <- airquality_seasonav %>% arrange(desc(Averageso2)) %>% head(10) %>%
+            left_join(airquality_season, by=c("Country.Name")) %>%
+            mutate(Country.Name = fct_reorder2(Country.Name, month, 
+                                               MonthlyAverageso2))
+Top10_NO2 <- airquality_seasonav %>% arrange(desc(Averageno2)) %>% head(10) %>%
+            left_join(airquality_season, by=c("Country.Name")) %>%
+            mutate(Country.Name = fct_reorder2(Country.Name, month, 
+                                               MonthlyAverageno2))
+
+ggplot(data = Top10_PM25, aes(x=as.numeric(month), y=MonthlyAveragepm25)) +  
+    geom_line(aes(color = Country.Name))+
+  geom_point(aes(color = Country.Name))+
+  labs(title = "Top 10 countries PM2.5",
+       x = "Months",
+       y = "PM2.5",
+       color = "Countries")+
+  theme(legend.title=element_blank(),
+        axis.title=element_text(face="bold"),
+        plot.title=element_text(face="bold")) +
+        scale_x_continuous(breaks = pretty_breaks())
+
+ggplot(data = Top10_CO, aes(x=as.numeric(month), y=MonthlyAverageco)) +  
+    geom_line(aes(color = Country.Name))+
+  geom_point(aes(color = Country.Name))+
+  labs(title = "Top 10 countries CO",
+       x = "Months",
+       y = "CO",
+       color = "Countries")+
+  theme(legend.title=element_blank(),
+        axis.title=element_text(face="bold"),
+        plot.title=element_text(face="bold")) +
+        scale_x_continuous(breaks = pretty_breaks())
+
+ggplot(data = Top10_PM10, aes(x=as.numeric(month), y=MonthlyAveragepm10)) +  
+    geom_line(aes(color = Country.Name))+
+  geom_point(aes(color = Country.Name))+
+  labs(title = "Top 10 countries PM10",
+       x = "Months",
+       y = "PM10",
+       color = "Countries")+
+  theme(legend.title=element_blank(),
+        axis.title=element_text(face="bold"),
+        plot.title=element_text(face="bold")) +
+        scale_x_continuous(breaks = pretty_breaks())
+
+ggplot(data = Top10_O3, aes(x=as.numeric(month), y=MonthlyAverageo3)) +  
+    geom_line(aes(color = Country.Name))+
+  geom_point(aes(color = Country.Name))+
+  labs(title = "Top 10 countries O3",
+       x = "Months",
+       y = "O3",
+       color = "Countries")+
+  theme(legend.title=element_blank(),
+        axis.title=element_text(face="bold"),
+        plot.title=element_text(face="bold")) +
+        scale_x_continuous(breaks = pretty_breaks())
+
+ggplot(data = Top10_SO2, aes(x=as.numeric(month), y=MonthlyAverageso2)) +  
+    geom_line(aes(color = Country.Name))+
+  geom_point(aes(color = Country.Name))+
+  labs(title = "Top 10 countries SO2",
+       x = "Months",
+       y = "SO2",
+       color = "Countries")+
+  theme(legend.title=element_blank(),
+        axis.title=element_text(face="bold"),
+        plot.title=element_text(face="bold")) +
+        scale_x_continuous(breaks = pretty_breaks())
+
+ggplot(data = Top10_NO2, aes(x=as.numeric(month), y=MonthlyAverageno2)) +  
+    geom_line(aes(color = Country.Name))+
+  geom_point(aes(color = Country.Name))+
+  labs(title = "Top 10 countries NO2",
+       x = "Months",
+       y = "NO2",
+       color = "Countries")+
+  theme(legend.title=element_blank(),
+        axis.title=element_text(face="bold"),
+        plot.title=element_text(face="bold")) +
+        scale_x_continuous(breaks = pretty_breaks())
+
+```
+
